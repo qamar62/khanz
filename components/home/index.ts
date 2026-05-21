@@ -1,0 +1,10 @@
+export { HeroSection } from "./hero-section";
+export { AboutPreview } from "./about-preview";
+export { SignatureDishes } from "./signature-dishes";
+export { CateringSection } from "./catering-section";
+export { TestimonialsSection } from "./testimonials-section";
+export { GalleryPreview } from "./gallery-preview";
+export { ReservationBanner } from "./reservation-banner";
+export { InstagramSection } from "./instagram-section";
+export { BranchesSection } from "./branches-section";
+export { GoogleReviewsSection } from "./google-reviews-section";
