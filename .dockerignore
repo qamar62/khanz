@@ -3,7 +3,9 @@ node_modules
 .next
 .git
 .gitignore
-*.md
+README.md
+DEPLOYMENT.md
+CHANGES.md
 .env*.local
 .vercel
 npm-debug.log*
