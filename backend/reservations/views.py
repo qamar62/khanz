@@ -3,6 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.core.mail import send_mail
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from .models import Reservation, ContactMessage, CateringRequest, Branch
 from .serializers import (
     ReservationSerializer,
@@ -13,6 +15,7 @@ from .serializers import (
 from .utils.google_calendar import create_calendar_event, delete_calendar_event
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class ReservationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing table reservations

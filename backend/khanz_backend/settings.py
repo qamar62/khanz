@@ -139,6 +139,12 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
     'http://localhost,http://127.0.0.1'
 ).split(',')
 
+# CSRF cookie settings for API
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = False
+
 # Security settings for reverse proxy
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
