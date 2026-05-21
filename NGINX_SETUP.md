@@ -7,80 +7,59 @@ This guide explains how to set up Nginx as a reverse proxy for your Khanz Restau
 ```
 Cloudflare (https://khanz.qaam.work)
     ↓
-Nginx (Port 80/443)
+Nginx Container (Port 80) - Host Network
     ↓
-├── Frontend (localhost:3000) - Next.js
-├── Backend (localhost:8000) - Django API
+├── Frontend (localhost:3000) - Next.js Container
+├── Backend (localhost:8000) - Django Container
 └── Admin (localhost:8000/admin) - Django Admin
 ```
 
 ## 📋 Prerequisites
 
-- Docker containers running with host networking
-- Nginx installed on your server
+- Docker and Docker Compose installed
 - Cloudflare configured with your domain
+- `.env` file configured with proper settings
 
-## 🚀 Installation Steps
+## 🚀 Deployment (Everything in Docker!)
 
-### 1. Install Nginx (if not already installed)
-
-```bash
-sudo apt update
-sudo apt install nginx -y
-```
-
-### 2. Copy Nginx Configuration
+### 1. Pull Latest Code
 
 ```bash
-# Copy the production nginx config
-sudo cp nginx-production.conf /etc/nginx/sites-available/khanz
-
-# Create symbolic link
-sudo ln -s /etc/nginx/sites-available/khanz /etc/nginx/sites-enabled/
-
-# Remove default site (optional)
-sudo rm /etc/nginx/sites-enabled/default
-```
-
-### 3. Create Static Files Directory
-
-```bash
-# Create directories for Django static and media files
-sudo mkdir -p /var/www/khanz/staticfiles
-sudo mkdir -p /var/www/khanz/media
-
-# Set permissions
-sudo chown -R www-data:www-data /var/www/khanz
-```
-
-### 4. Collect Django Static Files
-
-```bash
-# Run from your project directory
 cd /root/khanz
-
-# Collect static files to the nginx directory
-docker exec khanz_backend python manage.py collectstatic --noinput
-
-# Copy static files to nginx directory
-sudo cp -r backend/staticfiles/* /var/www/khanz/staticfiles/
+git pull origin main
 ```
 
-### 5. Test Nginx Configuration
+### 2. Configure Environment
 
 ```bash
-# Test configuration
-sudo nginx -t
+# Make sure .env file has correct settings
+nano .env
 
-# If successful, reload nginx
-sudo systemctl reload nginx
+# Required settings:
+ALLOWED_HOSTS=localhost,127.0.0.1,khanz.qaam.work,www.khanz.qaam.work
+CORS_ALLOWED_ORIGINS=http://localhost:3000,https://khanz.qaam.work,https://www.khanz.qaam.work
 ```
 
-### 6. Enable Nginx to Start on Boot
+### 3. Deploy All Services (Including Nginx!)
 
 ```bash
-sudo systemctl enable nginx
-sudo systemctl start nginx
+# Build and start all containers
+docker-compose up -d --build
+
+# Check all services are running
+docker-compose ps
+```
+
+That's it! Nginx is now running as a Docker container alongside your application.
+
+### 4. Verify Deployment
+
+```bash
+# Check nginx logs
+docker-compose logs nginx
+
+# Check all services
+docker-compose logs -f
 ```
 
 ## 🔧 Cloudflare Configuration
@@ -142,70 +121,63 @@ curl https://khanz.qaam.work/
 
 ### Admin Page Not Loading
 
-1. **Check static files are collected:**
+1. **Check Nginx container logs:**
    ```bash
-   ls -la /var/www/khanz/staticfiles/admin/
+   docker-compose logs nginx
    ```
 
-2. **Check Nginx error logs:**
+2. **Check backend is running:**
    ```bash
-   sudo tail -f /var/log/nginx/error.log
-   ```
-
-3. **Check backend is running:**
-   ```bash
-   docker ps | grep khanz_backend
+   docker-compose ps
    curl http://localhost:8000/admin/
    ```
 
-4. **Verify ALLOWED_HOSTS in Django:**
+3. **Verify ALLOWED_HOSTS in Django:**
    ```bash
    # In your .env file
    ALLOWED_HOSTS=localhost,127.0.0.1,khanz.qaam.work,www.khanz.qaam.work
    ```
 
+4. **Check static files in volume:**
+   ```bash
+   docker exec khanz_nginx ls -la /var/www/khanz/staticfiles/admin/
+   ```
+
 ### 502 Bad Gateway
 
-1. **Check if services are running:**
+1. **Check if all services are running:**
    ```bash
    docker-compose ps
    ```
 
 2. **Check if ports are listening:**
    ```bash
-   netstat -tlnp | grep -E '3000|8000'
+   netstat -tlnp | grep -E '3000|8000|80'
    ```
 
-3. **Restart services:**
+3. **Restart all services:**
    ```bash
    docker-compose restart
-   sudo systemctl restart nginx
    ```
 
 ### Static Files Not Loading
 
-1. **Recollect static files:**
+1. **Restart backend to recollect static files:**
    ```bash
-   docker exec khanz_backend python manage.py collectstatic --noinput --clear
-   sudo cp -r backend/staticfiles/* /var/www/khanz/staticfiles/
+   docker-compose restart backend
    ```
 
-2. **Check permissions:**
+2. **Check static files volume:**
    ```bash
-   sudo chown -R www-data:www-data /var/www/khanz
-   sudo chmod -R 755 /var/www/khanz
+   docker volume inspect khanz_static_volume
+   docker exec khanz_nginx ls -la /var/www/khanz/staticfiles/
    ```
 
 ## 📊 Monitoring
 
-### View Nginx Access Logs
+### View Nginx Logs
 ```bash
-sudo tail -f /var/log/nginx/access.log
-```
-
-### View Nginx Error Logs
-```bash
-sudo tail -f /var/log/nginx/error.log
+docker-compose logs -f nginx
 ```
 
 ### View Application Logs
@@ -225,14 +197,14 @@ docker-compose logs -f
 After making changes to `nginx-production.conf`:
 
 ```bash
-# Copy new config
-sudo cp nginx-production.conf /etc/nginx/sites-available/khanz
+# Pull latest changes
+git pull origin main
 
-# Test configuration
-sudo nginx -t
+# Restart nginx container
+docker-compose restart nginx
 
-# Reload nginx
-sudo systemctl reload nginx
+# Or rebuild if needed
+docker-compose up -d --build nginx
 ```
 
 ## 🔒 Security Recommendations
