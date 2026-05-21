@@ -19,7 +19,6 @@ token.json
 backend/credentials.json
 backend/token.json
 backend/credentials/
-*.json
 
 # Common ignores
 node_modules
