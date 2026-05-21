@@ -58,11 +58,11 @@ services:
   # Next.js Frontend
   frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: khanz_frontend
     volumes:
-      - ./public:/app/public
+      - ./frontend/public:/app/public
     ports:
       - "3000:3000"
     environment:

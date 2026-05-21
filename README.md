@@ -31,6 +31,7 @@ Modern restaurant website with reservation system, Google Calendar integration, 
 
 2. **Setup Frontend**
    ```bash
+   cd frontend
    npm install
    cp .env.example .env.local
    # Edit .env.local with your settings
@@ -107,16 +108,19 @@ Modern restaurant website with reservation system, Google Calendar integration, 
 
 ```
 khanz/
-├── app/                    # Next.js pages
-├── components/             # React components
-├── lib/                    # Utilities and API client
-├── backend/                # Django backend
-│   ├── khanz_backend/      # Django project settings
-│   ├── reservations/       # Main app
-│   └── requirements.txt    # Python dependencies
-├── docker-compose.yml      # Production Docker setup
-├── Dockerfile              # Frontend Docker image
-└── README.md               # This file
+├── frontend/               # Next.js frontend application
+│   ├── app/               # Next.js pages
+│   ├── components/        # React components
+│   ├── lib/               # Utilities and API client
+│   ├── public/            # Static assets
+│   └── package.json       # Frontend dependencies
+├── backend/               # Django backend application
+│   ├── khanz_backend/     # Django project settings
+│   ├── reservations/      # Main app (models, views, serializers)
+│   └── requirements.txt   # Python dependencies
+├── docker-compose.yml     # Production Docker setup
+├── Makefile              # Quick commands
+└── README.md             # This file
 ```
 
 ## 🔒 Security
