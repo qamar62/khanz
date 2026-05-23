@@ -1,4 +1,3 @@
-import { Navbar, Footer, FloatingCTA } from "@/components/layout";
 import {
   HeroSection,
   AboutPreview,
@@ -13,21 +12,16 @@ import {
 
 export default function HomePage() {
   return (
-    <>
-      <Navbar />
-      <main>
-        <HeroSection />
-        <AboutPreview />
-        <SignatureDishes />
-        <BranchesSection />
-        <CateringSection />
-        <GalleryPreview />
-        <GoogleReviewsSection />
-        <ReservationBanner />
-        <InstagramSection />
-      </main>
-      <Footer />
-      <FloatingCTA />
-    </>
+    <main>
+      <HeroSection />
+      <AboutPreview />
+      <SignatureDishes />
+      <BranchesSection />
+      <CateringSection />
+      <GalleryPreview />
+      <GoogleReviewsSection />
+      <ReservationBanner />
+      <InstagramSection />
+    </main>
   );
 }
