@@ -27,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Navbar, Footer, FloatingCTA } from "@/components/layout";
 import { PageHero, Section, Container, SectionHeader, Divider } from "@/components/ui/section";
 import { FadeIn, StaggerContainer, StaggerItem, ScaleOnHover } from "@/components/animations";
 import { eventTypes, contactInfo } from "@/lib/data";
@@ -167,9 +166,7 @@ export default function CateringPage() {
   };
 
   return (
-    <>
-      <Navbar />
-      <main>
+    <main>
         <PageHero
           title="Catering & Events"
           subtitle="Transform your special occasions into extraordinary culinary experiences"
@@ -621,8 +618,5 @@ export default function CateringPage() {
           </Container>
         </Section>
       </main>
-      <Footer />
-      <FloatingCTA />
-    </>
   );
 }

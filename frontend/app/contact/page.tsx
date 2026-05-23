@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
-import { Navbar, Footer, FloatingCTA } from "@/components/layout";
 import { PageHero, Section, Container, SectionHeader } from "@/components/ui/section";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 import { Button } from "@/components/ui/button";
@@ -84,9 +83,7 @@ export default function ContactPage() {
   };
 
   return (
-    <>
-      <Navbar />
-      <main>
+    <main>
         <PageHero
           title="Contact Us"
           subtitle="Get in touch with us at any of our locations"
@@ -357,8 +354,5 @@ export default function ContactPage() {
           </Container>
         </Section>
       </main>
-      <Footer />
-      <FloatingCTA />
-    </>
   );
 }

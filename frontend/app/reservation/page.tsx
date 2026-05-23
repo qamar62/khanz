@@ -26,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Navbar, Footer } from "@/components/layout";
 import { PageHero, Section, Container } from "@/components/ui/section";
 import { FadeIn } from "@/components/animations";
 import { timeSlots, contactInfo } from "@/lib/data";
@@ -140,9 +139,7 @@ export default function ReservationPage() {
 
   if (isSuccess) {
     return (
-      <>
-        <Navbar />
-        <main>
+      <main>
           <Section className="min-h-[80vh] flex items-center relative overflow-hidden">
             {/* Animated Background Elements */}
             <motion.div
@@ -298,15 +295,11 @@ export default function ReservationPage() {
             </Container>
           </Section>
         </main>
-        <Footer />
-      </>
     );
   }
 
   return (
-    <>
-      <Navbar />
-      <main>
+    <main>
         <PageHero
           title="Reserve Your Table"
           subtitle="Experience exceptional dining - Book your table for an unforgettable evening"
@@ -669,7 +662,5 @@ export default function ReservationPage() {
           </Container>
         </Section>
       </main>
-      <Footer />
-    </>
   );
 }

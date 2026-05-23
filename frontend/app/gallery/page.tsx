@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Filter } from "lucide-react";
-import { Navbar, Footer, FloatingCTA } from "@/components/layout";
 import { PageHero, Section, Container } from "@/components/ui/section";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 import { cn } from "@/lib/utils";
@@ -131,9 +130,7 @@ export default function GalleryPage() {
   };
 
   return (
-    <>
-      <Navbar />
-      <main>
+    <main>
         <PageHero
           title="Gallery"
           subtitle="A visual journey through our culinary artistry and memorable moments"
@@ -206,84 +203,80 @@ export default function GalleryPage() {
             </FadeIn>
           </Container>
         </Section>
-      </main>
 
-      {/* Lightbox */}
-      <AnimatePresence>
-        {selectedImage !== null && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-xl flex items-center justify-center p-4"
-            onClick={() => setSelectedImage(null)}
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => setSelectedImage(null)}
-              className="absolute top-6 right-6 w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors z-10"
-              aria-label="Close lightbox"
-            >
-              <X className="h-6 w-6" />
-            </button>
-
-            {/* Navigation */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigateImage("prev");
-              }}
-              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors z-10"
-              aria-label="Previous image"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigateImage("next");
-              }}
-              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors z-10"
-              aria-label="Next image"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
-
-            {/* Image */}
+        {/* Lightbox */}
+        <AnimatePresence>
+          {selectedImage !== null && (
             <motion.div
-              key={selectedImage}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.3 }}
-              className="max-w-5xl max-h-[80vh] w-full"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-background/95 backdrop-blur-xl flex items-center justify-center p-4"
+              onClick={() => setSelectedImage(null)}
             >
-              <img
-                src={
-                  filteredImages.find((img) => img.id === selectedImage)?.src || ""
-                }
-                alt={
-                  filteredImages.find((img) => img.id === selectedImage)?.alt || ""
-                }
-                className="w-full h-full object-contain rounded-lg"
-              />
-              <p className="text-center text-muted-foreground mt-4">
-                {filteredImages.find((img) => img.id === selectedImage)?.alt}
-              </p>
+              {/* Close Button */}
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-6 right-6 w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors z-10"
+                aria-label="Close lightbox"
+              >
+                <X className="h-6 w-6" />
+              </button>
+
+              {/* Navigation */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage("prev");
+                }}
+                className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors z-10"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage("next");
+                }}
+                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors z-10"
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+
+              {/* Image */}
+              <motion.div
+                key={selectedImage}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                className="max-w-5xl max-h-[80vh] w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={
+                    filteredImages.find((img) => img.id === selectedImage)?.src || ""
+                  }
+                  alt={
+                    filteredImages.find((img) => img.id === selectedImage)?.alt || ""
+                  }
+                  className="w-full h-full object-contain rounded-lg"
+                />
+                <p className="text-center text-muted-foreground mt-4">
+                  {filteredImages.find((img) => img.id === selectedImage)?.alt}
+                </p>
+              </motion.div>
+
+              {/* Image Counter */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-muted-foreground text-sm">
+                {currentIndex + 1} / {filteredImages.length}
+              </div>
             </motion.div>
-
-            {/* Image Counter */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-muted-foreground text-sm">
-              {currentIndex + 1} / {filteredImages.length}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <Footer />
-      <FloatingCTA />
-    </>
+          )}
+        </AnimatePresence>
+      </main>
   );
 }

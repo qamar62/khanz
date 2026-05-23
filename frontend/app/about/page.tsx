@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ArrowRight, Award, Users, Clock, Utensils, ChefHat } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Navbar, Footer, FloatingCTA } from "@/components/layout";
 import { PageHero, Section, Container, SectionHeader, Divider } from "@/components/ui/section";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 
@@ -93,9 +92,7 @@ const team = [
 
 export default function AboutPage() {
   return (
-    <>
-      <Navbar />
-      <main>
+    <main>
         <PageHero
           title="Our Story"
           subtitle="A journey of passion, tradition, and culinary excellence"
@@ -319,8 +316,5 @@ export default function AboutPage() {
           </Container>
         </Section>
       </main>
-      <Footer />
-      <FloatingCTA />
-    </>
   );
 }

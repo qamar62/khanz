@@ -5,7 +5,6 @@ import { Search, Flame, Filter, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Navbar, Footer, FloatingCTA } from "@/components/layout";
 import { PageHero, Section, Container } from "@/components/ui/section";
 import { FadeIn, StaggerContainer, StaggerItem, ScaleOnHover } from "@/components/animations";
 import { menuItems, categoryLabels } from "@/lib/data";
@@ -80,9 +79,7 @@ export default function MenuPage() {
     searchQuery || activeDietaryFilters.length > 0 || activeCategory !== "all";
 
   return (
-    <>
-      <Navbar />
-      <main>
+    <main>
         <PageHero
           title="Our Menu"
           subtitle="Discover a symphony of flavors crafted with passion and the finest ingredients"
@@ -352,8 +349,5 @@ export default function MenuPage() {
           </Container>
         </Section>
       </main>
-      <Footer />
-      <FloatingCTA />
-    </>
   );
 }
