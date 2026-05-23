@@ -74,7 +74,7 @@ export function Navbar() {
                   alt="Khanz Restaurant"
                   width={120}
                   height={40}
-                  className="h-8 lg:h-10 w-auto dark:invert-0 invert brightness-0"
+                  className="h-8 lg:h-10 w-auto dark:invert brightness-0"
                   priority
                 />
               </motion.div>
