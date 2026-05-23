@@ -54,14 +54,14 @@ export function Navbar() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
-          isScrolled
-            ? "glass py-3"
-            : "bg-transparent py-5"
-        )}
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-4 lg:px-8"
       >
-        <nav className="container mx-auto px-4 lg:px-8">
+        <nav className={cn(
+          "container mx-auto transition-all duration-500",
+          isScrolled
+            ? "glass rounded-full py-3 px-6 mt-4 max-w-7xl"
+            : "bg-transparent py-5 lg:glass lg:rounded-full lg:px-6 lg:mt-4 lg:max-w-7xl"
+        )}>
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="relative z-10">
@@ -74,7 +74,7 @@ export function Navbar() {
                   alt="Khanz Restaurant"
                   width={120}
                   height={40}
-                  className="h-8 lg:h-10 w-auto"
+                  className="h-8 lg:h-10 w-auto dark:invert-0 invert brightness-0"
                   priority
                 />
               </motion.div>
