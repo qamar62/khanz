@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -112,6 +113,7 @@ export function Navbar() {
                 <Phone className="h-4 w-4" />
                 <span>+64 9 123 4567</span>
               </Link>
+              <ThemeToggle />
               <Button
                 asChild
                 className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6"
@@ -120,23 +122,26 @@ export function Navbar() {
               </Button>
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden relative z-10 p-2"
-              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-            >
-              <motion.div
-                animate={isMobileMenuOpen ? "open" : "closed"}
-                className="w-6 h-6 flex items-center justify-center"
+            {/* Mobile Menu Button & Theme Toggle */}
+            <div className="lg:hidden flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="relative z-10 p-2"
+                aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
               >
-                {isMobileMenuOpen ? (
-                  <X className="h-6 w-6 text-foreground" />
-                ) : (
-                  <Menu className="h-6 w-6 text-foreground" />
-                )}
-              </motion.div>
-            </button>
+                <motion.div
+                  animate={isMobileMenuOpen ? "open" : "closed"}
+                  className="w-6 h-6 flex items-center justify-center"
+                >
+                  {isMobileMenuOpen ? (
+                    <X className="h-6 w-6 text-foreground" />
+                  ) : (
+                    <Menu className="h-6 w-6 text-foreground" />
+                  )}
+                </motion.div>
+              </button>
+            </div>
           </div>
         </nav>
       </motion.header>

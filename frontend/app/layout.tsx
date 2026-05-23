@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { ThemeProvider } from "@/contexts/theme-context";
 import "./globals.css";
 
 const inter = Inter({
@@ -77,8 +78,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="font-sans antialiased bg-background text-foreground">
-        {children}
-        {process.env.NODE_ENV === "production" && <Analytics />}
+        <ThemeProvider>
+          {children}
+          {process.env.NODE_ENV === "production" && <Analytics />}
+        </ThemeProvider>
       </body>
     </html>
   );
