@@ -1,9 +1,7 @@
 import {
   HeroSection,
   AboutPreview,
-  SignatureDishes,
   CateringSection,
-  GalleryPreview,
   ReservationBanner,
   InstagramSection,
   BranchesSection,
@@ -15,10 +13,8 @@ export default function HomePage() {
     <main>
       <HeroSection />
       <AboutPreview />
-      <SignatureDishes />
       <BranchesSection />
       <CateringSection />
-      <GalleryPreview />
       <GoogleReviewsSection />
       <ReservationBanner />
       <InstagramSection />

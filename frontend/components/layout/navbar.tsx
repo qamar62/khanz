@@ -59,7 +59,7 @@ export function Navbar() {
         <nav className={cn(
           "container mx-auto transition-all duration-500",
           isScrolled
-            ? "glass rounded-full py-3 px-6 mt-4 max-w-7xl"
+            ? "bg-background/95 dark:bg-background/80 backdrop-blur-xl border border-border rounded-full py-3 px-6 mt-4 max-w-7xl shadow-lg"
             : "bg-transparent py-5 lg:glass lg:rounded-full lg:px-6 lg:mt-4 lg:max-w-7xl"
         )}>
           <div className="flex items-center justify-between">

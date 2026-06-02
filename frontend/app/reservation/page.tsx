@@ -13,6 +13,7 @@ import {
   Check,
   PartyPopper,
   ArrowLeft,
+  MapPin,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -47,11 +48,18 @@ const guestOptions = Array.from({ length: 12 }, (_, i) => ({
   label: `${i + 1} ${i === 0 ? "Guest" : "Guests"}`,
 }));
 
+const branches = [
+  { value: "khanz-mediterranean", label: "Khanz Mediterranean Restaurant - Papatoetoe" },
+  { value: "khanz-botany", label: "Khanz Restaurant Botany - Flat Bush" },
+  { value: "khanz-takeaway", label: "Khanz Takeaway - Panmure" },
+];
+
 export default function ReservationPage() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
+    branch: "",
     date: "",
     time: "",
     guests: "",
@@ -100,6 +108,7 @@ export default function ReservationPage() {
         guests: parseInt(formData.guests),
         occasion: formData.occasion,
         special_requests: formData.specialRequests,
+        branch: formData.branch,
       });
 
       if (response.error) {
@@ -119,7 +128,7 @@ export default function ReservationPage() {
     }
   };
 
-  const canProceedToStep2 = formData.date && formData.time && formData.guests;
+  const canProceedToStep2 = formData.branch && formData.date && formData.time && formData.guests;
   const canSubmit =
     canProceedToStep2 && formData.name && formData.email && formData.phone;
 
@@ -245,6 +254,12 @@ export default function ReservationPage() {
                   </h2>
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center gap-3">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      <span className="text-muted-foreground">
+                        {branches.find(b => b.value === formData.branch)?.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
                       <Calendar className="h-5 w-5 text-primary" />
                       <span className="text-muted-foreground">
                         {new Date(formData.date).toLocaleDateString("en-NZ", {
@@ -327,7 +342,7 @@ export default function ReservationPage() {
                     {step > 1 ? <Check className="h-5 w-5" /> : "1"}
                   </div>
                   <span className="hidden sm:inline text-sm font-medium">
-                    Date & Time
+                    Branch & Details
                   </span>
                 </div>
 
@@ -373,10 +388,33 @@ export default function ReservationPage() {
                     >
                       <div className="bg-card border border-border rounded-2xl p-6 lg:p-8">
                         <h2 className="font-serif text-2xl font-semibold text-foreground mb-6">
-                          Select Date & Time
+                          Select Branch, Date & Time
                         </h2>
 
                         <div className="space-y-6">
+                          {/* Branch Selection */}
+                          <div className="space-y-3">
+                            <Label className="text-foreground">
+                              <MapPin className="h-4 w-4 inline mr-2" />
+                              Select Branch
+                            </Label>
+                            <Select
+                              value={formData.branch}
+                              onValueChange={(v) => updateFormData("branch", v)}
+                            >
+                              <SelectTrigger className="h-12 rounded-xl bg-secondary border-border">
+                                <SelectValue placeholder="Choose a branch" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {branches.map((branch) => (
+                                  <SelectItem key={branch.value} value={branch.value}>
+                                    {branch.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
                           {/* Date Selection */}
                           <div className="space-y-3">
                             <Label className="text-foreground">
@@ -480,7 +518,11 @@ export default function ReservationPage() {
                       {/* Summary Card */}
                       <div className="bg-secondary/50 border border-border rounded-2xl p-4">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-sm">
+                          <div className="flex flex-wrap items-center gap-4 text-sm">
+                            <span className="flex items-center gap-1 text-muted-foreground">
+                              <MapPin className="h-4 w-4 text-primary" />
+                              {branches.find(b => b.value === formData.branch)?.label}
+                            </span>
                             <span className="flex items-center gap-1 text-muted-foreground">
                               <Calendar className="h-4 w-4 text-primary" />
                               {new Date(formData.date).toLocaleDateString(

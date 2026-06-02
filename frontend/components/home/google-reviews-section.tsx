@@ -65,7 +65,7 @@ export function GoogleReviewsSection() {
   };
 
   return (
-    <Section className="bg-charcoal-dark/30">
+    <Section className="bg-secondary/30">
       <Container>
         <FadeIn>
           <SectionHeader
@@ -204,7 +204,7 @@ function ReviewCard({ review }: { review: typeof googleReviews[0] }) {
   return (
     <motion.div
       whileHover={{ y: -5 }}
-      className="glass p-8 rounded-2xl h-full flex flex-col"
+      className="bg-card border border-border p-8 rounded-2xl h-full flex flex-col shadow-sm"
     >
       {/* Quote Icon */}
       <div className="mb-4">

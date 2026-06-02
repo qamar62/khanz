@@ -420,7 +420,7 @@ export const contactInfo = {
   address: "123 Queen Street, Auckland CBD, New Zealand",
   whatsapp: "+64211234567",
   social: {
-    instagram: "https://instagram.com/khanzrestaurant",
+    instagram: "https://www.instagram.com/khanzrestaurant",
     facebook: "https://facebook.com/khanzrestaurant",
   },
 };

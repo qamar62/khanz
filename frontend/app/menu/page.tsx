@@ -1,353 +1,204 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Search, Flame, Filter, X } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, UtensilsCrossed, Flame, Eye } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { PageHero, Section, Container } from "@/components/ui/section";
-import { FadeIn, StaggerContainer, StaggerItem, ScaleOnHover } from "@/components/animations";
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 import { menuItems, categoryLabels } from "@/lib/data";
-import { MenuCategory, DietaryLabel } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
-const categories: MenuCategory[] = [
-  "starters",
-  "mains",
-  "tandoori",
-  "biryani",
-  "desserts",
-  "drinks",
-];
-
-const dietaryFilters: { value: DietaryLabel; label: string }[] = [
-  { value: "vegetarian", label: "Vegetarian" },
-  { value: "vegan", label: "Vegan" },
-  { value: "gluten-free", label: "Gluten Free" },
+const branches = [
+  {
+    id: "khanz-mediterranean",
+    name: "Khanz Mediterranean Restaurant",
+    location: "Papatoetoe",
+    menuFile: "/menus/khanz-mediterranean-menu.pdf", // Replace with actual file path
+  },
+  {
+    id: "khanz-botany",
+    name: "Khanz Restaurant Botany",
+    location: "Flat Bush",
+    menuFile: "/menus/khanz-botany-menu.pdf", // Replace with actual file path
+  },
+  {
+    id: "khanz-takeaway",
+    name: "Khanz Takeaway",
+    location: "Panmure",
+    menuFile: "/menus/khanz-takeaway-menu.pdf", // Replace with actual file path
+  },
 ];
 
 export default function MenuPage() {
-  const [activeCategory, setActiveCategory] = useState<MenuCategory | "all">("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeDietaryFilters, setActiveDietaryFilters] = useState<DietaryLabel[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [expandedBranch, setExpandedBranch] = useState<string | null>(null);
 
-  const filteredItems = useMemo(() => {
-    return menuItems.filter((item) => {
-      // Category filter
-      if (activeCategory !== "all" && item.category !== activeCategory) {
-        return false;
-      }
-
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        if (
-          !item.name.toLowerCase().includes(query) &&
-          !item.description.toLowerCase().includes(query)
-        ) {
-          return false;
-        }
-      }
-
-      // Dietary filter
-      if (activeDietaryFilters.length > 0) {
-        if (!item.dietary || !activeDietaryFilters.some((f) => item.dietary?.includes(f))) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [activeCategory, searchQuery, activeDietaryFilters]);
-
-  const toggleDietaryFilter = (filter: DietaryLabel) => {
-    setActiveDietaryFilters((prev) =>
-      prev.includes(filter)
-        ? prev.filter((f) => f !== filter)
-        : [...prev, filter]
-    );
+  const toggleBranch = (branchId: string) => {
+    setExpandedBranch(expandedBranch === branchId ? null : branchId);
   };
 
-  const clearFilters = () => {
-    setSearchQuery("");
-    setActiveDietaryFilters([]);
-    setActiveCategory("all");
-  };
-
-  const hasActiveFilters =
-    searchQuery || activeDietaryFilters.length > 0 || activeCategory !== "all";
+  // Group menu items by category
+  const categories = ["starters", "mains", "tandoori", "biryani", "desserts", "drinks"];
+  const itemsByCategory = categories.map((category) => ({
+    category,
+    items: menuItems.filter((item) => item.category === category),
+  }));
 
   return (
     <main>
-        <PageHero
-          title="Our Menu"
-          subtitle="Discover a symphony of flavors crafted with passion and the finest ingredients"
-        />
+      <PageHero
+        title="Our Menu"
+        subtitle="Discover a symphony of flavors crafted with passion and the finest ingredients"
+      />
 
-        <Section className="pt-0 -mt-8">
-          <Container>
-            {/* Search and Filter Bar */}
-            <FadeIn>
-              <div className="glass rounded-2xl p-4 lg:p-6 mb-8">
-                <div className="flex flex-col lg:flex-row gap-4">
-                  {/* Search */}
-                  <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Search dishes..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 h-12 bg-secondary border-border rounded-xl"
-                    />
-                  </div>
-
-                  {/* Filter Toggle (Mobile) */}
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="lg:hidden h-12 rounded-xl border-border"
-                  >
-                    <Filter className="h-5 w-5 mr-2" />
-                    Filters
-                    {hasActiveFilters && (
-                      <span className="ml-2 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                        {(activeCategory !== "all" ? 1 : 0) + activeDietaryFilters.length}
-                      </span>
-                    )}
-                  </Button>
-
-                  {/* Dietary Filters (Desktop) */}
-                  <div className="hidden lg:flex items-center gap-2">
-                    {dietaryFilters.map((filter) => (
-                      <button
-                        key={filter.value}
-                        onClick={() => toggleDietaryFilter(filter.value)}
-                        className={cn(
-                          "px-4 py-2 rounded-xl text-sm font-medium transition-colors",
-                          activeDietaryFilters.includes(filter.value)
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-foreground hover:bg-secondary/80"
-                        )}
-                      >
-                        {filter.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Clear Filters */}
-                  {hasActiveFilters && (
-                    <Button
-                      variant="ghost"
-                      onClick={clearFilters}
-                      className="h-12 rounded-xl text-muted-foreground hover:text-foreground"
+      <Section className="pt-0 -mt-8">
+        <Container size="narrow">
+          <StaggerContainer className="space-y-4">
+            {branches.map((branch, index) => (
+              <StaggerItem key={branch.id}>
+                <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                  {/* Branch Header */}
+                  <div className="flex items-center justify-between p-6">
+                    <button
+                      onClick={() => toggleBranch(branch.id)}
+                      className="flex-1 flex items-center gap-4 hover:opacity-80 transition-opacity"
                     >
-                      <X className="h-4 w-4 mr-2" />
-                      Clear
-                    </Button>
-                  )}
-                </div>
-
-                {/* Mobile Filters */}
-                <AnimatePresence>
-                  {showFilters && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="lg:hidden overflow-hidden"
-                    >
-                      <div className="pt-4 mt-4 border-t border-border">
-                        <p className="text-sm text-muted-foreground mb-3">
-                          Dietary Preferences
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <UtensilsCrossed className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-serif text-xl font-bold text-foreground">
+                          {branch.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {branch.location}
                         </p>
-                        <div className="flex flex-wrap gap-2">
-                          {dietaryFilters.map((filter) => (
-                            <button
-                              key={filter.value}
-                              onClick={() => toggleDietaryFilter(filter.value)}
-                              className={cn(
-                                "px-4 py-2 rounded-xl text-sm font-medium transition-colors",
-                                activeDietaryFilters.includes(filter.value)
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-secondary text-foreground"
-                              )}
-                            >
-                              {filter.label}
-                            </button>
+                      </div>
+                    </button>
+                    
+                    <div className="flex items-center gap-2">
+                      {/* View Menu File Button */}
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full"
+                      >
+                        <a
+                          href={branch.menuFile}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Menu
+                        </a>
+                      </Button>
+                      
+                      {/* Expand/Collapse Button */}
+                      <button
+                        onClick={() => toggleBranch(branch.id)}
+                        className="p-2 hover:bg-secondary/50 rounded-full transition-colors"
+                      >
+                        <motion.div
+                          animate={{ rotate: expandedBranch === branch.id ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <ChevronDown className="h-6 w-6 text-muted-foreground" />
+                        </motion.div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expandable Menu Content */}
+                  <AnimatePresence>
+                    {expandedBranch === branch.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-border p-6 space-y-8">
+                          {itemsByCategory.map(({ category, items }) => (
+                            <div key={category}>
+                              <h4 className="font-serif text-lg font-semibold text-foreground mb-4 pb-2 border-b border-border">
+                                {categoryLabels[category]}
+                              </h4>
+                              <div className="space-y-4">
+                                {items.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="flex justify-between items-start gap-4 group"
+                                  >
+                                    <div className="flex-1">
+                                      <div className="flex items-start gap-2 mb-1">
+                                        <h5 className="font-medium text-foreground group-hover:text-primary transition-colors">
+                                          {item.name}
+                                        </h5>
+                                        {item.isChefSpecial && (
+                                          <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded">
+                                            Chef's Special
+                                          </span>
+                                        )}
+                                        {item.isPopular && !item.isChefSpecial && (
+                                          <span className="px-2 py-0.5 bg-secondary text-foreground text-xs font-medium rounded">
+                                            Popular
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-sm text-muted-foreground leading-relaxed">
+                                        {item.description}
+                                      </p>
+                                      <div className="flex items-center gap-3 mt-2">
+                                        {item.spiceLevel && (
+                                          <div className="flex items-center gap-1">
+                                            {Array.from({ length: 3 }).map((_, i) => (
+                                              <Flame
+                                                key={i}
+                                                className={cn(
+                                                  "h-3 w-3",
+                                                  i < item.spiceLevel!
+                                                    ? "text-orange-500"
+                                                    : "text-muted-foreground/30"
+                                                )}
+                                              />
+                                            ))}
+                                          </div>
+                                        )}
+                                        {item.dietary && item.dietary.length > 0 && (
+                                          <div className="flex gap-1">
+                                            {item.dietary.map((label) => (
+                                              <span
+                                                key={label}
+                                                className="text-xs text-muted-foreground capitalize"
+                                              >
+                                                {label.replace("-", " ")}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="text-primary font-semibold whitespace-nowrap">
+                                      ${item.price}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </FadeIn>
-
-            {/* Category Navigation */}
-            <FadeIn delay={0.1}>
-              <div className="sticky top-20 z-30 -mx-4 px-4 py-4 glass mb-8 overflow-x-auto">
-                <div className="flex items-center gap-2 min-w-max">
-                  <button
-                    onClick={() => setActiveCategory("all")}
-                    className={cn(
-                      "px-5 py-2.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                      activeCategory === "all"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-foreground hover:bg-secondary/80"
+                      </motion.div>
                     )}
-                  >
-                    All Dishes
-                  </button>
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setActiveCategory(category)}
-                      className={cn(
-                        "px-5 py-2.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                        activeCategory === category
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-foreground hover:bg-secondary/80"
-                      )}
-                    >
-                      {categoryLabels[category]}
-                    </button>
-                  ))}
+                  </AnimatePresence>
                 </div>
-              </div>
-            </FadeIn>
-
-            {/* Menu Items */}
-            {filteredItems.length > 0 ? (
-              <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredItems.map((item) => (
-                  <StaggerItem key={item.id}>
-                    <ScaleOnHover>
-                      <div className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 transition-all duration-300">
-                        {/* Image */}
-                        <div className="aspect-[16/10] relative overflow-hidden">
-                          <div
-                            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                            style={{
-                              backgroundImage:
-                                "url('https://images.unsplash.com/photo-1585937421612-70a008356fbe?q=80&w=800')",
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-
-                          {/* Badges */}
-                          <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                            {item.isChefSpecial && (
-                              <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                                Chef&apos;s Special
-                              </span>
-                            )}
-                            {item.isPopular && !item.isChefSpecial && (
-                              <span className="px-3 py-1 bg-foreground/90 text-background text-xs font-medium rounded-full">
-                                Popular
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Price */}
-                          <div className="absolute top-4 right-4 px-3 py-1 glass rounded-full">
-                            <span className="text-primary font-semibold">
-                              ${item.price}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-6">
-                          <h3 className="font-serif text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-                            {item.name}
-                          </h3>
-
-                          <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2">
-                            {item.description}
-                          </p>
-
-                          {/* Meta */}
-                          <div className="flex items-center justify-between">
-                            {/* Spice Level */}
-                            {item.spiceLevel && (
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-muted-foreground mr-1">
-                                  Spice:
-                                </span>
-                                {Array.from({ length: 3 }).map((_, i) => (
-                                  <Flame
-                                    key={i}
-                                    className={cn(
-                                      "h-4 w-4",
-                                      i < item.spiceLevel!
-                                        ? "text-orange-500"
-                                        : "text-muted-foreground/30"
-                                    )}
-                                  />
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Dietary Labels */}
-                            {item.dietary && item.dietary.length > 0 && (
-                              <div className="flex gap-1">
-                                {item.dietary.slice(0, 2).map((label) => (
-                                  <span
-                                    key={label}
-                                    className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded capitalize"
-                                  >
-                                    {label.replace("-", " ")}
-                                  </span>
-                                ))}
-                                {item.dietary.length > 2 && (
-                                  <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                                    +{item.dietary.length - 2}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </ScaleOnHover>
-                  </StaggerItem>
-                ))}
-              </StaggerContainer>
-            ) : (
-              <FadeIn>
-                <div className="text-center py-16">
-                  <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
-                    <Search className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <h3 className="font-serif text-2xl font-semibold text-foreground mb-2">
-                    No dishes found
-                  </h3>
-                  <p className="text-muted-foreground mb-6">
-                    Try adjusting your search or filters
-                  </p>
-                  <Button
-                    onClick={clearFilters}
-                    variant="outline"
-                    className="rounded-full"
-                  >
-                    Clear all filters
-                  </Button>
-                </div>
-              </FadeIn>
-            )}
-
-            {/* Results Count */}
-            {filteredItems.length > 0 && (
-              <FadeIn className="mt-8 text-center">
-                <p className="text-muted-foreground text-sm">
-                  Showing {filteredItems.length} of {menuItems.length} dishes
-                </p>
-              </FadeIn>
-            )}
-          </Container>
-        </Section>
-      </main>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        </Container>
+      </Section>
+    </main>
   );
 }

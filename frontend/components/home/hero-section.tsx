@@ -31,9 +31,7 @@ export function HeroSection() {
 
           <FadeIn delay={0.4}>
             <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-foreground mb-6 leading-[1.1]">
-              A Culinary
-              <br />
-              <span className="text-gradient">Journey</span> Awaits
+              Khanz Group of Restaurants
             </h1>
           </FadeIn>
 

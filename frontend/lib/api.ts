@@ -20,6 +20,7 @@ export interface ReservationData {
   guests: number;
   occasion?: string;
   special_requests?: string;
+  branch?: string;
 }
 
 export interface Reservation extends ReservationData {

@@ -1,24 +1,20 @@
 "use client";
 
-import { MapPin, Phone, Clock } from "lucide-react";
+import Link from "next/link";
+import { MapPin, Phone, Clock, ArrowRight } from "lucide-react";
 import { Section, Container, SectionHeader } from "@/components/ui/section";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
+import { Button } from "@/components/ui/button";
 
 const branches = [
-  {
-    name: "Khanz Fusion Buffet",
-    address: "38C East Tamaki Road, Papatoetoe, Auckland 2025",
-    phone: "+64 09 250 1919",
-    email: "info@khanz.co.nz",
-    hours: "Monday - Sunday: 11:30 AM - 9:30 PM",
-    featured: true,
-  },
   {
     name: "Khanz Mediterranean Restaurant",
     address: "135 Great South Road, Papatoetoe, Auckland 2025",
     phone: "+64 09 250 1623",
     email: "info@khanz.co.nz",
     hours: "Monday - Sunday: 12:00 PM - 9:00 PM",
+    slug: "khanz-mediterranean-restaurant",
+    featured: true,
   },
   {
     name: "Khanz Restaurant Botany",
@@ -26,6 +22,7 @@ const branches = [
     phone: "+64 9 250 4414",
     email: "info@khanz.co.nz",
     hours: "Monday - Sunday: 11:30 AM - 10:00 PM",
+    slug: "khanz-botany",
   },
   {
     name: "Khanz Takeaway",
@@ -33,6 +30,7 @@ const branches = [
     phone: "+64 09 527 0647",
     email: "info@khanz.co.nz",
     hours: "Monday - Sunday: 11:00 AM - 9:00 PM",
+    slug: null,
   },
 ];
 
@@ -51,9 +49,9 @@ export function BranchesSection() {
         <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-2 gap-6 lg:gap-8">
           {branches.map((branch) => (
             <StaggerItem key={branch.name}>
-              <div className="group bg-card border border-border rounded-2xl p-8 h-full hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
+              <div className="group bg-card border border-border rounded-2xl p-8 h-full hover:border-primary/30 transition-all duration-300 hover:shadow-lg flex flex-col">
                 {branch.featured && (
-                  <span className="inline-block text-xs font-medium tracking-wider uppercase text-primary bg-primary/10 px-3 py-1 rounded-full mb-4">
+                  <span className="inline-block text-xs font-medium tracking-wider uppercase text-primary bg-primary/10 px-3 py-1 rounded-full mb-4 w-fit">
                     Flagship Location
                   </span>
                 )}
@@ -62,7 +60,7 @@ export function BranchesSection() {
                   {branch.name}
                 </h3>
 
-                <div className="space-y-4">
+                <div className="space-y-4 flex-grow">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                       <MapPin className="h-5 w-5 text-primary" />
@@ -102,6 +100,20 @@ export function BranchesSection() {
                     </div>
                   </div>
                 </div>
+
+                {branch.slug && (
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <Button
+                      asChild
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl"
+                    >
+                      <Link href={`/${branch.slug}`}>
+                        View Menu & Reserve Table
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                )}
               </div>
             </StaggerItem>
           ))}

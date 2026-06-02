@@ -1,40 +1,103 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Instagram, ArrowUpRight } from "lucide-react";
+import { Instagram, ArrowUpRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Section, Container, SectionHeader } from "@/components/ui/section";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 import { contactInfo } from "@/lib/data";
 
-const instagramPosts = [
+interface InstagramPost {
+  id: string;
+  permalink: string;
+  media_url: string;
+  thumbnail_url?: string;
+  caption?: string;
+  media_type: string;
+}
+
+// Fallback posts in case Instagram fetch fails
+const fallbackPosts = [
   {
-    src: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?q=80&w=400",
-    likes: "1.2k",
+    id: "1",
+    permalink: "https://www.instagram.com/khanzrestaurant",
+    media_url: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?q=80&w=400",
+    media_type: "IMAGE",
   },
   {
-    src: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?q=80&w=400",
-    likes: "987",
+    id: "2",
+    permalink: "https://www.instagram.com/khanzrestaurant",
+    media_url: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?q=80&w=400",
+    media_type: "IMAGE",
   },
   {
-    src: "https://images.unsplash.com/photo-1601050690597-df0568f70950?q=80&w=400",
-    likes: "2.1k",
+    id: "3",
+    permalink: "https://www.instagram.com/khanzrestaurant",
+    media_url: "https://images.unsplash.com/photo-1601050690597-df0568f70950?q=80&w=400",
+    media_type: "IMAGE",
   },
   {
-    src: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=400",
-    likes: "1.5k",
+    id: "4",
+    permalink: "https://www.instagram.com/khanzrestaurant",
+    media_url: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=400",
+    media_type: "IMAGE",
   },
   {
-    src: "https://images.unsplash.com/photo-1574653853027-5382a3d23a15?q=80&w=400",
-    likes: "856",
+    id: "5",
+    permalink: "https://www.instagram.com/khanzrestaurant",
+    media_url: "https://images.unsplash.com/photo-1574653853027-5382a3d23a15?q=80&w=400",
+    media_type: "IMAGE",
   },
   {
-    src: "https://images.unsplash.com/photo-1505253758473-96b7015fcd40?q=80&w=400",
-    likes: "1.8k",
+    id: "6",
+    permalink: "https://www.instagram.com/khanzrestaurant",
+    media_url: "https://images.unsplash.com/photo-1505253758473-96b7015fcd40?q=80&w=400",
+    media_type: "IMAGE",
   },
 ];
 
 export function InstagramSection() {
+  const [posts, setPosts] = useState<InstagramPost[]>(fallbackPosts);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch Instagram posts using public endpoint
+    // Note: This uses Instagram's public JSON endpoint which doesn't require authentication
+    const fetchInstagramPosts = async () => {
+      try {
+        const username = "khanzrestaurant";
+        // Using a CORS proxy to fetch Instagram data
+        const response = await fetch(`https://www.instagram.com/${username}/?__a=1&__d=dis`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          const edges = data?.graphql?.user?.edge_owner_to_timeline_media?.edges || [];
+          
+          const instagramPosts = edges.slice(0, 6).map((edge: any) => ({
+            id: edge.node.id,
+            permalink: `https://www.instagram.com/p/${edge.node.shortcode}/`,
+            media_url: edge.node.display_url,
+            thumbnail_url: edge.node.thumbnail_src,
+            caption: edge.node.edge_media_to_caption?.edges[0]?.node?.text || "",
+            media_type: edge.node.__typename === "GraphVideo" ? "VIDEO" : "IMAGE",
+          }));
+
+          if (instagramPosts.length > 0) {
+            setPosts(instagramPosts);
+          }
+        }
+      } catch (error) {
+        console.log("Using fallback Instagram posts:", error);
+        // Keep fallback posts
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInstagramPosts();
+  }, []);
+
   return (
     <Section className="bg-secondary/30">
       <Container>
@@ -59,37 +122,50 @@ export function InstagramSection() {
           </div>
         </FadeIn>
 
-        <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {instagramPosts.map((post, index) => (
-            <StaggerItem key={index}>
-              <a
-                href={contactInfo.social.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block group relative aspect-square rounded-xl overflow-hidden"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full h-full"
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {posts.map((post) => (
+              <StaggerItem key={post.id}>
+                <a
+                  href={post.permalink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block group relative aspect-square rounded-xl overflow-hidden"
                 >
-                  <div
-                    className="w-full h-full bg-cover bg-center"
-                    style={{ backgroundImage: `url('${post.src}')` }}
-                  />
-                </motion.div>
-                <div className="absolute inset-0 bg-background/0 group-hover:bg-background/60 transition-colors duration-300 flex items-center justify-center">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-center">
-                    <ArrowUpRight className="h-8 w-8 text-foreground mx-auto mb-1" />
-                    <span className="text-sm text-foreground font-medium">
-                      {post.likes} likes
-                    </span>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full h-full"
+                  >
+                    <div
+                      className="w-full h-full bg-cover bg-center"
+                      style={{ backgroundImage: `url('${post.media_url}')` }}
+                    />
+                    {post.media_type === "VIDEO" && (
+                      <div className="absolute top-2 right-2 bg-background/80 rounded-full p-1">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                        </svg>
+                      </div>
+                    )}
+                  </motion.div>
+                  <div className="absolute inset-0 bg-background/0 group-hover:bg-background/60 transition-colors duration-300 flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-center">
+                      <Instagram className="h-8 w-8 text-foreground mx-auto mb-1" />
+                      <span className="text-sm text-foreground font-medium">
+                        View on Instagram
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </a>
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
+                </a>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        )}
       </Container>
     </Section>
   );
