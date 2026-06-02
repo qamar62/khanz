@@ -17,11 +17,10 @@ export function AboutPreview() {
           {/* Image Side - Restaurant Interior */}
           <FadeIn direction="left" className="relative">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-              {/* Placeholder for restaurant interior image */}
               <div 
                 className="aspect-[4/3] bg-cover bg-center"
                 style={{ 
-                  backgroundImage: "url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070')" 
+                  backgroundImage: "url('/homepage-img.jpg')" 
                 }}
               />
             </div>
