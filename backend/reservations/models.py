@@ -29,6 +29,7 @@ class Reservation(models.Model):
     phone = models.CharField(max_length=20)
     
     # Reservation Details
+    branch = models.CharField(max_length=100, blank=True, default='')
     date = models.DateField()
     time = models.TimeField()
     guests = models.IntegerField(

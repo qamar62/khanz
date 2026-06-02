@@ -11,7 +11,7 @@ class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = [
-            'id', 'name', 'email', 'phone', 'date', 'time', 'guests',
+            'id', 'name', 'email', 'phone', 'branch', 'date', 'time', 'guests',
             'occasion', 'special_requests', 'status', 'google_calendar_event_id',
             'is_upcoming', 'created_at', 'updated_at'
         ]

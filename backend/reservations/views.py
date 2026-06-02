@@ -107,6 +107,7 @@ Dear {reservation.name},
 Thank you for your reservation at Khanz Restaurant!
 
 Reservation Details:
+{f"- Branch: {reservation.branch}" if reservation.branch else ""}
 - Date: {reservation.date.strftime('%A, %B %d, %Y')}
 - Time: {reservation.time.strftime('%I:%M %p')}
 - Guests: {reservation.guests}
