@@ -78,15 +78,15 @@ export default function ReservationPage() {
   const convertTo24Hour = (time12h: string): string => {
     const [time, modifier] = time12h.split(' ');
     let [hours, minutes] = time.split(':');
-    
+
     if (hours === '12') {
       hours = '00';
     }
-    
+
     if (modifier === 'PM') {
       hours = String(parseInt(hours, 10) + 12);
     }
-    
+
     return `${hours.padStart(2, '0')}:${minutes}:00`;
   };
 
@@ -97,7 +97,7 @@ export default function ReservationPage() {
     try {
       // Convert time to 24-hour format
       const time24h = convertTo24Hour(formData.time);
-      
+
       // Submit to Django API
       const response = await reservationAPI.create({
         name: formData.name,
@@ -161,7 +161,7 @@ export default function ReservationPage() {
                 <motion.div
                   key={i}
                   initial={{ y: -100, opacity: 0 }}
-                  animate={{ 
+                  animate={{
                     y: [null, 800],
                     opacity: [0, 1, 0],
                     x: [0, Math.random() * 100 - 50]
@@ -187,30 +187,30 @@ export default function ReservationPage() {
                 transition={{ duration: 0.6 }}
                 className="text-center relative z-10"
               >
-                <motion.div 
+                <motion.div
                   className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto mb-8 relative"
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
-                  transition={{ 
-                    type: "spring", 
-                    stiffness: 200, 
+                  transition={{
+                    type: "spring",
+                    stiffness: 200,
                     damping: 15,
-                    delay: 0.2 
+                    delay: 0.2
                   }}
                 >
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ 
-                      delay: 0.5, 
-                      type: "spring", 
+                    transition={{
+                      delay: 0.5,
+                      type: "spring",
                       stiffness: 300,
                       damping: 10
                     }}
                   >
                     <Check className="h-12 w-12 text-primary" />
                   </motion.div>
-                  
+
                   {/* Pulse ring effect */}
                   <motion.div
                     className="absolute inset-0 rounded-full border-2 border-primary"
@@ -224,7 +224,7 @@ export default function ReservationPage() {
                   />
                 </motion.div>
 
-                <motion.h1 
+                <motion.h1
                   className="font-serif text-3xl md:text-4xl font-bold text-gradient mb-4"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -233,7 +233,7 @@ export default function ReservationPage() {
                   Reservation Confirmed! 🎉
                 </motion.h1>
 
-                <motion.p 
+                <motion.p
                   className="text-muted-foreground text-lg mb-8"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -243,7 +243,7 @@ export default function ReservationPage() {
                   sent a confirmation email to {formData.email}.
                 </motion.p>
 
-                <motion.div 
+                <motion.div
                   className="bg-card border border-border rounded-2xl p-6 mb-8 text-left max-w-md mx-auto"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -286,7 +286,7 @@ export default function ReservationPage() {
                   </div>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                   className="flex flex-col sm:flex-row items-center justify-center gap-4"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -316,62 +316,70 @@ export default function ReservationPage() {
   return (
     <main>
         <PageHero
+          label="Reservations"
           title="Reserve Your Table"
-          subtitle="Experience exceptional dining - Book your table for an unforgettable evening"
+          subtitle="Book your table for an unforgettable evening — romantic dinners, family celebrations, and everything in between"
+          backgroundImage="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=2070"
         />
 
         <Section className="pt-0 -mt-8">
           <Container size="narrow">
             <FadeIn>
               {/* Progress Steps */}
-              <div className="flex items-center justify-center gap-4 mb-12">
-                <div
-                  className={cn(
-                    "flex items-center gap-2",
-                    step >= 1 ? "text-primary" : "text-muted-foreground"
-                  )}
-                >
+              <div className="flex justify-center mb-12">
+                <div className="inline-flex items-center gap-3 sm:gap-4 rounded-full border border-border bg-card/80 backdrop-blur-sm px-5 py-3 shadow-sm">
                   <div
                     className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center font-semibold",
-                      step >= 1
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-muted-foreground"
+                      "flex items-center gap-2.5",
+                      step >= 1 ? "text-foreground" : "text-muted-foreground"
                     )}
                   >
-                    {step > 1 ? <Check className="h-5 w-5" /> : "1"}
+                    <div
+                      className={cn(
+                        "w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300",
+                        step > 1
+                          ? "bg-primary/15 text-primary border border-primary/40"
+                          : step === 1
+                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/30 ring-4 ring-primary/15"
+                          : "bg-secondary text-muted-foreground"
+                      )}
+                    >
+                      {step > 1 ? <Check className="h-4 w-4" /> : "1"}
+                    </div>
+                    <span className="hidden sm:inline text-sm font-medium">
+                      Branch &amp; Details
+                    </span>
                   </div>
-                  <span className="hidden sm:inline text-sm font-medium">
-                    Branch & Details
-                  </span>
-                </div>
 
-                <div
-                  className={cn(
-                    "w-12 h-0.5",
-                    step >= 2 ? "bg-primary" : "bg-border"
-                  )}
-                />
+                  <div className="relative w-10 sm:w-14 h-0.5 rounded-full bg-border overflow-hidden">
+                    <div
+                      className={cn(
+                        "absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-500",
+                        step >= 2 ? "w-full" : "w-0"
+                      )}
+                    />
+                  </div>
 
-                <div
-                  className={cn(
-                    "flex items-center gap-2",
-                    step >= 2 ? "text-primary" : "text-muted-foreground"
-                  )}
-                >
                   <div
                     className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center font-semibold",
-                      step >= 2
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-muted-foreground"
+                      "flex items-center gap-2.5",
+                      step >= 2 ? "text-foreground" : "text-muted-foreground"
                     )}
                   >
-                    2
+                    <div
+                      className={cn(
+                        "w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300",
+                        step === 2
+                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/30 ring-4 ring-primary/15"
+                          : "bg-secondary text-muted-foreground"
+                      )}
+                    >
+                      2
+                    </div>
+                    <span className="hidden sm:inline text-sm font-medium">
+                      Your Details
+                    </span>
                   </div>
-                  <span className="hidden sm:inline text-sm font-medium">
-                    Your Details
-                  </span>
                 </div>
               </div>
 
@@ -386,10 +394,15 @@ export default function ReservationPage() {
                       transition={{ duration: 0.3 }}
                       className="space-y-8"
                     >
-                      <div className="bg-card border border-border rounded-2xl p-6 lg:p-8">
-                        <h2 className="font-serif text-2xl font-semibold text-foreground mb-6">
-                          Select Branch, Date & Time
-                        </h2>
+                      <div className="bg-card border border-border rounded-2xl p-6 lg:p-8 shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                          <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <Calendar className="h-5 w-5 text-primary" />
+                          </span>
+                          <h2 className="font-serif text-2xl font-semibold text-foreground">
+                            Select Branch, Date &amp; Time
+                          </h2>
+                        </div>
 
                         <div className="space-y-6">
                           {/* Branch Selection */}
@@ -451,10 +464,10 @@ export default function ReservationPage() {
                                   type="button"
                                   onClick={() => updateFormData("time", time)}
                                   className={cn(
-                                    "py-3 px-4 rounded-xl text-sm font-medium transition-colors",
+                                    "py-3 px-4 rounded-xl text-sm font-medium border transition-all duration-200",
                                     formData.time === time
-                                      ? "bg-primary text-primary-foreground"
-                                      : "bg-secondary text-foreground hover:bg-secondary/80"
+                                      ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/25 scale-[1.03]"
+                                      : "bg-secondary text-foreground border-transparent hover:border-primary/40 hover:bg-secondary/80"
                                   )}
                                 >
                                   {time}
@@ -516,14 +529,15 @@ export default function ReservationPage() {
                       className="space-y-8"
                     >
                       {/* Summary Card */}
-                      <div className="bg-secondary/50 border border-border rounded-2xl p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-wrap items-center gap-4 text-sm">
-                            <span className="flex items-center gap-1 text-muted-foreground">
+                      <div className="relative bg-card border border-primary/25 rounded-2xl p-5 overflow-hidden">
+                        <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary/70 to-primary/20" />
+                        <div className="flex items-start sm:items-center justify-between gap-4">
+                          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                            <span className="flex items-center gap-1.5 text-foreground/90 font-medium">
                               <MapPin className="h-4 w-4 text-primary" />
                               {branches.find(b => b.value === formData.branch)?.label}
                             </span>
-                            <span className="flex items-center gap-1 text-muted-foreground">
+                            <span className="flex items-center gap-1.5 text-muted-foreground">
                               <Calendar className="h-4 w-4 text-primary" />
                               {new Date(formData.date).toLocaleDateString(
                                 "en-NZ",
@@ -534,11 +548,11 @@ export default function ReservationPage() {
                                 }
                               )}
                             </span>
-                            <span className="flex items-center gap-1 text-muted-foreground">
+                            <span className="flex items-center gap-1.5 text-muted-foreground">
                               <Clock className="h-4 w-4 text-primary" />
                               {formData.time}
                             </span>
-                            <span className="flex items-center gap-1 text-muted-foreground">
+                            <span className="flex items-center gap-1.5 text-muted-foreground">
                               <Users className="h-4 w-4 text-primary" />
                               {formData.guests} guests
                             </span>
@@ -546,17 +560,22 @@ export default function ReservationPage() {
                           <button
                             type="button"
                             onClick={() => setStep(1)}
-                            className="text-primary text-sm hover:underline"
+                            className="shrink-0 text-primary text-sm font-medium rounded-full border border-primary/30 px-4 py-1.5 hover:bg-primary/10 transition-colors"
                           >
                             Edit
                           </button>
                         </div>
                       </div>
 
-                      <div className="bg-card border border-border rounded-2xl p-6 lg:p-8">
-                        <h2 className="font-serif text-2xl font-semibold text-foreground mb-6">
-                          Your Details
-                        </h2>
+                      <div className="bg-card border border-border rounded-2xl p-6 lg:p-8 shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                          <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <User className="h-5 w-5 text-primary" />
+                          </span>
+                          <h2 className="font-serif text-2xl font-semibold text-foreground">
+                            Your Details
+                          </h2>
+                        </div>
 
                         <div className="space-y-6">
                           {/* Name */}

@@ -9,6 +9,7 @@ import { Menu, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
+import { contactInfo } from "@/lib/data";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -87,18 +88,20 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "relative text-sm font-medium tracking-wide uppercase transition-colors duration-300",
+                    "relative group text-sm font-medium tracking-wide uppercase transition-colors duration-300",
                     pathname === link.href
                       ? "text-primary"
                       : "text-foreground/80 hover:text-primary"
                   )}
                 >
                   {link.label}
-                  {pathname === link.href && (
+                  {pathname === link.href ? (
                     <motion.span
                       layoutId="activeNav"
-                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary"
+                      className="absolute -bottom-1.5 left-0 right-0 h-0.5 rounded-full bg-primary"
                     />
+                  ) : (
+                    <span className="absolute -bottom-1.5 left-0 h-0.5 w-0 rounded-full bg-primary/60 transition-all duration-300 group-hover:w-full" />
                   )}
                 </Link>
               ))}
@@ -107,16 +110,17 @@ export function Navbar() {
             {/* Desktop CTA */}
             <div className="hidden lg:flex items-center gap-4">
               <Link
-                href="tel:+6491234567"
+                href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
                 className="flex items-center gap-2 text-sm text-foreground/80 hover:text-primary transition-colors"
               >
-                <Phone className="h-4 w-4" />
-                <span>+64 9 123 4567</span>
+                <Phone className="h-4 w-4 text-primary" />
+                <span>{contactInfo.phone}</span>
               </Link>
+              <span className="h-5 w-px bg-border" />
               <ThemeToggle />
               <Button
                 asChild
-                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-0.5"
               >
                 <Link href="/reservation">Book a Table</Link>
               </Button>
@@ -189,15 +193,27 @@ export function Navbar() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="mt-8"
+                className="mt-8 flex flex-col items-center gap-5"
               >
+                <div className="flex items-center gap-4">
+                  <span className="h-px w-10 bg-border" />
+                  <span className="w-1.5 h-1.5 rotate-45 bg-primary" />
+                  <span className="h-px w-10 bg-border" />
+                </div>
                 <Button
                   asChild
                   size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 shadow-lg shadow-primary/25"
                 >
                   <Link href="/reservation">Book a Table</Link>
                 </Button>
+                <Link
+                  href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Phone className="h-4 w-4 text-primary" />
+                  {contactInfo.phone}
+                </Link>
               </motion.div>
             </motion.nav>
           </motion.div>

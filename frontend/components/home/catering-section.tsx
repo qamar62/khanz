@@ -65,15 +65,15 @@ export function CateringSection() {
             <StaggerContainer className="space-y-4 mb-8">
               {cateringServices.map((service, index) => (
                 <StaggerItem key={service.title}>
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/30 transition-colors">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <service.icon className="h-6 w-6 text-primary" />
+                  <div className="group flex items-start gap-4 p-5 rounded-xl bg-secondary/50 border border-border hover:border-primary/40 hover:bg-secondary/80 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-0.5">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 group-hover:bg-primary group-hover:shadow-md group-hover:shadow-primary/30 flex items-center justify-center shrink-0 transition-all duration-300">
+                      <service.icon className="h-6 w-6 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-1">
+                      <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
                         {service.title}
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
                         {service.description}
                       </p>
                     </div>
@@ -100,31 +100,31 @@ export function CateringSection() {
           <FadeIn direction="right" className="relative">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-4">
-                <div className="aspect-[3/4] rounded-2xl overflow-hidden">
+                <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-xl group">
                   <div
-                    className="w-full h-full bg-cover bg-center"
+                    className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                     style={{ backgroundImage: `url('${cateringServices[0].image}')` }}
                   />
                 </div>
-                <div className="aspect-square rounded-2xl overflow-hidden">
+                <div className="aspect-square rounded-2xl overflow-hidden shadow-xl group">
                   <div
-                    className="w-full h-full bg-cover bg-center"
+                    className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                     style={{ backgroundImage: `url('${cateringServices[2].image}')` }}
                   />
                 </div>
               </div>
               <div className="pt-8 space-y-4">
-                <div className="aspect-square rounded-2xl overflow-hidden">
+                <div className="aspect-square rounded-2xl overflow-hidden shadow-xl group">
                   <div
-                    className="w-full h-full bg-cover bg-center"
+                    className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                     style={{ backgroundImage: `url('${cateringServices[1].image}')` }}
                   />
                 </div>
-                <div className="glass rounded-2xl p-6">
+                <div className="glass rounded-2xl p-6 border border-primary/20">
                   <div className="font-serif text-3xl font-bold text-gradient mb-2">
                     200+
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-white/70">
                     Successful events catered with perfection
                   </p>
                 </div>

@@ -107,9 +107,9 @@ export function InstagramSection() {
               href={contactInfo.social.instagram}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-4"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-1.5 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors mb-5"
             >
-              <Instagram className="h-5 w-5" />
+              <Instagram className="h-4 w-4" />
               <span className="text-sm font-medium tracking-wide">@khanzrestaurant</span>
             </a>
             <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -153,11 +153,11 @@ export function InstagramSection() {
                       </div>
                     )}
                   </motion.div>
-                  <div className="absolute inset-0 bg-background/0 group-hover:bg-background/60 transition-colors duration-300 flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-center">
-                      <Instagram className="h-8 w-8 text-foreground mx-auto mb-1" />
-                      <span className="text-sm text-foreground font-medium">
-                        View on Instagram
+                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal-dark/85 via-charcoal-dark/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+                    <div className="translate-y-2 group-hover:translate-y-0 transition-transform duration-300 text-center">
+                      <Instagram className="h-6 w-6 text-white mx-auto mb-1" />
+                      <span className="text-xs text-white/90 font-medium tracking-wide">
+                        View Post
                       </span>
                     </div>
                   </div>

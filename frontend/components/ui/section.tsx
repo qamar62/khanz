@@ -89,6 +89,7 @@ export function SectionHeader({
 interface PageHeroProps {
   title: string;
   subtitle?: string;
+  label?: string;
   backgroundImage?: string;
   children?: ReactNode;
 }
@@ -96,11 +97,12 @@ interface PageHeroProps {
 export function PageHero({
   title,
   subtitle,
+  label,
   backgroundImage,
   children,
 }: PageHeroProps) {
   return (
-    <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[52vh] flex items-center justify-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-charcoal-dark">
         {backgroundImage && (
@@ -109,16 +111,26 @@ export function PageHero({
             style={{ backgroundImage: `url(${backgroundImage})` }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/55 to-background" />
+        <div className="absolute inset-0 bg-noise pointer-events-none" />
       </div>
 
+      {/* Ambient glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[36rem] h-[20rem] bg-primary/8 rounded-full blur-[120px] pointer-events-none" />
+
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 py-32 text-center">
-        <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 text-balance">
+      <div className="relative z-10 container mx-auto px-4 pt-36 pb-24 text-center">
+        <Divider ornament className="mb-7" />
+        {label && (
+          <span className="inline-block text-primary text-xs md:text-sm font-medium tracking-[0.3em] uppercase mb-4">
+            {label}
+          </span>
+        )}
+        <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-5 text-balance">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto text-pretty">
+          <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto text-pretty leading-relaxed">
             {subtitle}
           </p>
         )}
