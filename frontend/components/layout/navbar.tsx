@@ -15,7 +15,6 @@ const navLinks = [
   { href: "/", label: "Home" },
   { href: "/menu", label: "Menu" },
   { href: "/about", label: "About" },
-  { href: "/catering", label: "Catering" },
   { href: "/gallery", label: "Gallery" },
   { href: "/contact", label: "Contact" },
 ];
@@ -75,14 +74,17 @@ export function Navbar() {
                   alt="Khanz Restaurant"
                   width={120}
                   height={40}
-                  className="h-8 lg:h-10 w-auto dark:invert brightness-0"
+                  className={cn(
+                    "h-8 w-auto transition duration-500 lg:h-10",
+                    isScrolled ? "brightness-0 dark:invert" : "brightness-0 invert"
+                  )}
                   priority
                 />
               </motion.div>
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-8">
+            <div className="hidden lg:flex items-center gap-5 xl:gap-8">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -91,7 +93,9 @@ export function Navbar() {
                     "relative group text-sm font-medium tracking-wide uppercase transition-colors duration-300",
                     pathname === link.href
                       ? "text-primary"
-                      : "text-foreground/80 hover:text-primary"
+                      : isScrolled
+                        ? "text-foreground/80 hover:text-primary"
+                        : "text-white/80 hover:text-[#e7bd64]"
                   )}
                 >
                   {link.label}
@@ -111,16 +115,19 @@ export function Navbar() {
             <div className="hidden lg:flex items-center gap-4">
               <Link
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
-                className="flex items-center gap-2 text-sm text-foreground/80 hover:text-primary transition-colors"
+                className={cn(
+                  "hidden items-center gap-2 text-sm transition-colors xl:flex",
+                  isScrolled ? "text-foreground/80 hover:text-primary" : "text-white/75 hover:text-[#e7bd64]"
+                )}
               >
                 <Phone className="h-4 w-4 text-primary" />
                 <span>{contactInfo.phone}</span>
               </Link>
-              <span className="h-5 w-px bg-border" />
+              <span className="hidden h-5 w-px bg-border xl:block" />
               <ThemeToggle />
               <Button
                 asChild
-                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-0.5"
+                className="whitespace-nowrap bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-0.5"
               >
                 <Link href="/reservation">Book a Table</Link>
               </Button>

@@ -16,11 +16,11 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: "Khanz Restaurant | Premium Asian Cuisine & Catering",
+    default: "Khanz Restaurant | Mediterranean & Asian Dining in Auckland",
     template: "%s | Khanz Restaurant",
   },
   description:
-    "Experience the finest Asian cuisine in New Zealand. Premium dining, bespoke catering for weddings and corporate events. Book your table today.",
+    "Mediterranean and Asian dining across Auckland, with generous hospitality, flame-cooked favourites and catering for every occasion.",
   keywords: [
     "Asian restaurant",
     "New Zealand",
@@ -47,15 +47,15 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_NZ",
     siteName: "Khanz Restaurant",
-    title: "Khanz Restaurant | Premium Asian Cuisine & Catering",
+    title: "Khanz Restaurant | Mediterranean & Asian Dining in Auckland",
     description:
-      "Experience the finest Asian cuisine in New Zealand. Premium dining, bespoke catering for weddings and corporate events.",
+      "Mediterranean and Asian dining across Auckland, with flame-cooked favourites and generous hospitality.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Khanz Restaurant | Premium Asian Cuisine & Catering",
+    title: "Khanz Restaurant | Mediterranean & Asian Dining in Auckland",
     description:
-      "Experience the finest Asian cuisine in New Zealand. Premium dining, bespoke catering for weddings and corporate events.",
+      "Mediterranean and Asian dining across Auckland, with flame-cooked favourites and generous hospitality.",
   },
   robots: {
     index: true,

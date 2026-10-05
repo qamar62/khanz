@@ -1,4 +1,5 @@
 export { HeroSection } from "./hero-section";
+export { ScrollStory } from "./scroll-story";
 export { AboutPreview } from "./about-preview";
 export { SignatureDishes } from "./signature-dishes";
 export { CateringSection } from "./catering-section";

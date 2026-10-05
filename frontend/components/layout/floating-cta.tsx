@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { contactInfo } from "@/lib/data";
 
 export function FloatingCTA() {
   const [isVisible, setIsVisible] = useState(false);
@@ -28,7 +29,7 @@ export function FloatingCTA() {
         >
           {/* WhatsApp Button */}
           <motion.a
-            href="https://wa.me/64211234567?text=Hi,%20I%27d%20like%20to%20make%20a%20reservation"
+            href={`https://wa.me/${contactInfo.whatsapp.replace(/\D/g, "")}?text=Hi,%20I%27d%20like%20to%20make%20a%20reservation`}
             target="_blank"
             rel="noopener noreferrer"
             whileHover={{ scale: 1.05 }}

@@ -1,23 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Instagram, ArrowUpRight, Loader2 } from "lucide-react";
+import { Instagram } from "lucide-react";
 import { motion } from "framer-motion";
 import { Section, Container, SectionHeader } from "@/components/ui/section";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 import { contactInfo } from "@/lib/data";
 
-interface InstagramPost {
-  id: string;
-  permalink: string;
-  media_url: string;
-  thumbnail_url?: string;
-  caption?: string;
-  media_type: string;
-}
-
-// Fallback posts in case Instagram fetch fails
 const fallbackPosts = [
   {
     id: "1",
@@ -58,46 +46,6 @@ const fallbackPosts = [
 ];
 
 export function InstagramSection() {
-  const [posts, setPosts] = useState<InstagramPost[]>(fallbackPosts);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Fetch Instagram posts using public endpoint
-    // Note: This uses Instagram's public JSON endpoint which doesn't require authentication
-    const fetchInstagramPosts = async () => {
-      try {
-        const username = "khanzrestaurant";
-        // Using a CORS proxy to fetch Instagram data
-        const response = await fetch(`https://www.instagram.com/${username}/?__a=1&__d=dis`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          const edges = data?.graphql?.user?.edge_owner_to_timeline_media?.edges || [];
-          
-          const instagramPosts = edges.slice(0, 6).map((edge: any) => ({
-            id: edge.node.id,
-            permalink: `https://www.instagram.com/p/${edge.node.shortcode}/`,
-            media_url: edge.node.display_url,
-            thumbnail_url: edge.node.thumbnail_src,
-            caption: edge.node.edge_media_to_caption?.edges[0]?.node?.text || "",
-            media_type: edge.node.__typename === "GraphVideo" ? "VIDEO" : "IMAGE",
-          }));
-
-          if (instagramPosts.length > 0) {
-            setPosts(instagramPosts);
-          }
-        }
-      } catch (error) {
-        console.log("Using fallback Instagram posts:", error);
-        // Keep fallback posts
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInstagramPosts();
-  }, []);
-
   return (
     <Section className="bg-secondary/30">
       <Container>
@@ -122,13 +70,8 @@ export function InstagramSection() {
           </div>
         </FadeIn>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
           <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {posts.map((post) => (
+            {fallbackPosts.map((post) => (
               <StaggerItem key={post.id}>
                 <a
                   href={post.permalink}
@@ -165,7 +108,6 @@ export function InstagramSection() {
               </StaggerItem>
             ))}
           </StaggerContainer>
-        )}
       </Container>
     </Section>
   );

@@ -40,8 +40,8 @@ export function Footer() {
               />
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-              Experience the finest Asian cuisine in New Zealand. Premium
-              dining and bespoke catering for your most memorable occasions.
+              Mediterranean and Asian flavours, generous hospitality and
+              memorable catering across Auckland.
             </p>
             <div className="flex items-center gap-4">
               <a

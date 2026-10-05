@@ -1,320 +1,120 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Award, Users, Clock, Utensils, ChefHat } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { PageHero, Section, Container, SectionHeader, Divider } from "@/components/ui/section";
+import { motion } from "framer-motion";
+import { CalendarDays, Flame, Heart, Leaf, MapPin, Users } from "lucide-react";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 
-const timeline = [
-  {
-    year: "2018",
-    title: "The Beginning",
-    description:
-      "Khanz opened its doors in Auckland with a vision to bring authentic Asian flavors to New Zealand.",
-  },
-  {
-    year: "2020",
-    title: "Expansion",
-    description:
-      "Expanded our services with multiple locations and enhanced catering capabilities.",
-  },
-  {
-    year: "2022",
-    title: "Recognition",
-    description:
-      "Received the Auckland Restaurant Excellence Award for outstanding Asian cuisine.",
-  },
-  {
-    year: "2024",
-    title: "Growth",
-    description:
-      "Launched our catering division, bringing Khanz experiences to weddings and corporate events.",
-  },
-  {
-    year: "2025",
-    title: "Today",
-    description:
-      "Celebrating 7+ years of culinary excellence with over 50,000 happy guests served.",
-  },
-];
-
 const values = [
-  {
-    icon: Utensils,
-    title: "Authentic Flavors",
-    description:
-      "We honor traditional recipes while embracing modern culinary techniques.",
-  },
-  {
-    icon: Users,
-    title: "Warm Hospitality",
-    description:
-      "Every guest is treated like family, with genuine care and attention.",
-  },
-  {
-    icon: Award,
-    title: "Quality Excellence",
-    description:
-      "Only the finest ingredients, carefully sourced and expertly prepared.",
-  },
-  {
-    icon: Clock,
-    title: "Time-Honored Craft",
-    description:
-      "Patience and precision in every dish, honoring centuries of culinary tradition.",
-  },
+  { icon: Flame, title: "Cook with intent", copy: "We build flavour patiently—with heat, spice, balance and respect for every ingredient." },
+  { icon: Heart, title: "Welcome generously", copy: "Hospitality is more than service. It is noticing the details and making every table feel cared for." },
+  { icon: Leaf, title: "Keep it fresh", copy: "Fresh produce and thoughtful preparation bring brightness and honesty to every plate." },
+  { icon: Users, title: "Make room for everyone", copy: "Khanz is for weeknight dinners, big family tables, celebrations and everything between." },
 ];
 
-const team = [
-  {
-    name: "Chef Rajesh Kumar",
-    role: "Executive Chef",
-    description:
-      "With over 25 years of experience in premier kitchens across India and New Zealand, Chef Rajesh brings unparalleled expertise to every dish.",
-    image: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?q=80&w=600",
-  },
-  {
-    name: "Priya Sharma",
-    role: "Head Pastry Chef",
-    description:
-      "Priya crafts our signature desserts, blending traditional Indian sweets with contemporary techniques.",
-    image: "https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?q=80&w=600",
-  },
-  {
-    name: "Arjun Patel",
-    role: "Tandoor Master",
-    description:
-      "A third-generation tandoor specialist, Arjun brings the art of clay oven cooking to perfection.",
-    image: "https://images.unsplash.com/photo-1581299894007-aaa50297cf16?q=80&w=600",
-  },
+const locations = [
+  { place: "Papatoetoe", name: "Khanz Mediterranean", detail: "The original table" },
+  { place: "Flat Bush", name: "Khanz Botany", detail: "The neighbourhood gathering place" },
+  { place: "Panmure", name: "Khanz Takeaway", detail: "The flavours you love, to go" },
 ];
 
 export default function AboutPage() {
   return (
-    <main>
-        <PageHero
-          title="Our Story"
-          subtitle="A journey of passion, tradition, and culinary excellence"
-        />
+    <main className="bg-[#f2eee5] text-[#171712] dark:bg-[#11110e] dark:text-white">
+      <section className="relative min-h-[88svh] overflow-hidden bg-[#0b0b09] text-white">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?q=88&w=2200')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,7,5,.94)_0%,rgba(7,7,5,.62)_50%,rgba(7,7,5,.2)_100%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/25" />
+        <div className="relative mx-auto flex min-h-[88svh] max-w-[1480px] items-end px-5 pb-16 pt-36 sm:px-8 lg:px-14 lg:pb-20">
+          <div className="max-w-5xl">
+            <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-7 text-xs font-semibold uppercase tracking-[0.3em] text-[#e7bd64]">Our story · Auckland since 2018</motion.p>
+            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="font-serif text-[clamp(3.8rem,9.5vw,8.5rem)] font-medium leading-[0.84] tracking-[-0.055em]">
+              Food is how we
+              <span className="block italic text-[#e7bd64]">bring people closer.</span>
+            </motion.h1>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-8 max-w-2xl border-t border-white/20 pt-6 text-base leading-relaxed text-white/70 md:text-lg">
+              Khanz grew from one Auckland dining room and a simple belief: familiar flavours, made with care, can turn an ordinary meal into a memory.
+            </motion.p>
+          </div>
+        </div>
+      </section>
 
-        {/* Story Section */}
-        <Section className="pt-0 -mt-8">
-          <Container>
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-              {/* Image */}
-              <FadeIn direction="left">
-                <div className="relative">
-                  <div className="aspect-[4/5] rounded-2xl overflow-hidden">
-                    <div
-                      className="absolute inset-0 bg-cover bg-center"
-                      style={{
-                        backgroundImage:
-                          "url('https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?q=80&w=1000')",
-                      }}
-                    />
-                  </div>
-                  <div className="absolute -bottom-6 -right-6 lg:-right-12 glass rounded-2xl p-6 max-w-[280px]">
-                    <div className="font-serif text-4xl font-bold text-gradient mb-2">
-                      Since 2018
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Crafting extraordinary culinary experiences in Auckland
-                    </p>
-                  </div>
-                </div>
-              </FadeIn>
-
-              {/* Content */}
-              <FadeIn>
-                <span className="inline-block text-primary text-sm font-medium tracking-[0.2em] uppercase mb-4">
-                  About Khanz
-                </span>
-                <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-6 text-balance">
-                  Where Tradition Meets Innovation
-                </h2>
-                <div className="space-y-4 text-muted-foreground leading-relaxed">
-                  <p>
-                    Founded with a passion to bring the authentic flavors of Asia
-                    to New Zealand, Khanz Restaurant has become a destination for
-                    those who appreciate the finer aspects of Asian cuisine.
-                  </p>
-                  <p>
-                    Our journey began in 2018 when our founder envisioned a space
-                    where traditional recipes could be honored while embracing
-                    modern culinary sensibilities. Every dish tells a story of
-                    heritage, passed down through generations and perfected in our
-                    kitchen.
-                  </p>
-                  <p>
-                    Today, we continue to push boundaries, creating memorable
-                    dining experiences that celebrate the rich tapestry of Asian
-                    culinary arts while catering to contemporary tastes.
-                  </p>
-                </div>
-              </FadeIn>
+      <section className="px-5 py-20 sm:px-8 md:py-28 lg:px-14">
+        <div className="mx-auto grid max-w-[1480px] gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+          <FadeIn direction="left" className="relative">
+            <div className="aspect-[4/5] overflow-hidden">
+              <div className="h-full w-full bg-[url('https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?q=88&w=1200')] bg-cover bg-center" />
             </div>
-          </Container>
-        </Section>
-
-        {/* Values Section */}
-        <Section className="bg-secondary/30">
-          <Container>
-            <FadeIn>
-              <SectionHeader
-                label="Our Philosophy"
-                title="Values That Define Us"
-                description="The principles that guide everything we do, from sourcing ingredients to serving our guests."
-              />
-            </FadeIn>
-
-            <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {values.map((value) => (
-                <StaggerItem key={value.title}>
-                  <div className="bg-card border border-border rounded-2xl p-6 h-full hover:border-primary/30 transition-colors">
-                    <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
-                      <value.icon className="h-7 w-7 text-primary" />
-                    </div>
-                    <h3 className="font-serif text-xl font-semibold text-foreground mb-3">
-                      {value.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {value.description}
-                    </p>
-                  </div>
-                </StaggerItem>
-              ))}
-            </StaggerContainer>
-          </Container>
-        </Section>
-
-        {/* Timeline Section */}
-        <Section>
-          <Container size="narrow">
-            <FadeIn>
-              <SectionHeader
-                label="Our Journey"
-                title="Milestones Along the Way"
-                description="Key moments that have shaped Khanz into what it is today."
-              />
-            </FadeIn>
-
-            <div className="relative">
-              {/* Timeline Line */}
-              <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-border md:-translate-x-1/2" />
-
-              <div className="space-y-12">
-                {timeline.map((item, index) => (
-                  <FadeIn
-                    key={item.year}
-                    delay={index * 0.1}
-                    direction={index % 2 === 0 ? "left" : "right"}
-                  >
-                    <div
-                      className={`relative flex items-start gap-8 ${
-                        index % 2 === 0
-                          ? "md:flex-row"
-                          : "md:flex-row-reverse md:text-right"
-                      }`}
-                    >
-                      {/* Dot */}
-                      <div className="absolute left-4 md:left-1/2 w-3 h-3 bg-primary rounded-full md:-translate-x-1/2 mt-2" />
-
-                      {/* Content */}
-                      <div className="flex-1 ml-12 md:ml-0 md:w-1/2 md:px-8">
-                        <span className="text-primary font-serif text-2xl font-bold">
-                          {item.year}
-                        </span>
-                        <h3 className="font-semibold text-foreground text-lg mt-1 mb-2">
-                          {item.title}
-                        </h3>
-                        <p className="text-muted-foreground text-sm">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-                  </FadeIn>
-                ))}
-              </div>
+            <div className="absolute -bottom-6 right-0 bg-[#dca93f] px-6 py-5 text-[#171109] sm:right-8">
+              <span className="block font-serif text-4xl">2018</span>
+              <span className="text-xs font-bold uppercase tracking-[0.18em]">Where it began</span>
             </div>
-          </Container>
-        </Section>
+          </FadeIn>
 
-        {/* Team Section */}
-        <Section className="bg-secondary/30">
-          <Container>
-            <FadeIn>
-              <SectionHeader
-                label="Meet the Team"
-                title="The Masters Behind the Magic"
-                description="Passionate culinary artists dedicated to creating unforgettable dining experiences."
-              />
-            </FadeIn>
+          <FadeIn className="flex flex-col justify-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">The Khanz way</p>
+            <h2 className="mt-5 max-w-2xl font-serif text-4xl leading-[0.98] tracking-[-0.035em] md:text-6xl">Tradition in our hands. Auckland in our heart.</h2>
+            <div className="mt-8 max-w-2xl space-y-5 text-base leading-relaxed text-black/58 dark:text-white/58 md:text-lg">
+              <p>Our food draws from the generous tables of the Mediterranean and the layered spice traditions of Asia. We are not interested in choosing between heritage and evolution—we believe the most exciting cooking honours both.</p>
+              <p>That means slow-cooked sauces, food from the flame, fragrant rice and dishes designed to travel across the table. It also means listening to the city around us, sourcing thoughtfully and making space for the way Auckland eats today.</p>
+              <p>Across every Khanz location, the promise stays the same: full flavour, genuine warmth and a table worth returning to.</p>
+            </div>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <Link href="/menu" className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#171712] px-6 text-sm font-semibold text-white hover:bg-primary dark:bg-primary dark:text-primary-foreground">Explore the menu</Link>
+              <Link href="/reservation" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-black/20 px-6 text-sm font-semibold hover:border-primary dark:border-white/20"><CalendarDays className="h-4 w-4" /> Reserve a table</Link>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
 
-            <StaggerContainer className="grid md:grid-cols-3 gap-8">
-              {team.map((member) => (
-                <StaggerItem key={member.name}>
-                  <div className="group text-center">
-                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-6">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                        style={{ backgroundImage: `url('${member.image}')` }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-                    </div>
-                    <h3 className="font-serif text-xl font-semibold text-foreground mb-1">
-                      {member.name}
-                    </h3>
-                    <span className="text-primary text-sm font-medium mb-3 block">
-                      {member.role}
-                    </span>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {member.description}
-                    </p>
+      <section className="bg-[#171713] px-5 py-20 text-white sm:px-8 md:py-28 lg:px-14">
+        <div className="mx-auto max-w-[1480px]">
+          <FadeIn>
+            <div className="mb-14 grid gap-6 border-b border-white/15 pb-10 md:grid-cols-2 md:items-end">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#e7bd64]">What guides us</p>
+                <h2 className="mt-4 font-serif text-4xl leading-none md:text-6xl">Simple values.<br /><span className="italic text-[#e7bd64]">Felt in every detail.</span></h2>
+              </div>
+              <p className="max-w-lg text-base leading-relaxed text-white/55 md:justify-self-end">From the kitchen pass to the last plate cleared, these are the principles behind the experience.</p>
+            </div>
+          </FadeIn>
+          <StaggerContainer className="grid gap-px bg-white/10 md:grid-cols-2 lg:grid-cols-4">
+            {values.map((value, index) => (
+              <StaggerItem key={value.title}>
+                <article className="h-full bg-[#171713] p-7 lg:p-8">
+                  <div className="flex items-center justify-between">
+                    <value.icon className="h-6 w-6 text-[#e7bd64]" />
+                    <span className="font-serif text-2xl italic text-white/20">0{index + 1}</span>
                   </div>
-                </StaggerItem>
-              ))}
-            </StaggerContainer>
-          </Container>
-        </Section>
+                  <h3 className="mt-12 font-serif text-2xl">{value.title}</h3>
+                  <p className="mt-4 text-sm leading-relaxed text-white/52">{value.copy}</p>
+                </article>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        </div>
+      </section>
 
-        {/* CTA Section */}
-        <Section>
-          <Container size="narrow">
-            <FadeIn className="text-center">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-8">
-                <ChefHat className="h-10 w-10 text-primary" />
-              </div>
-              <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Experience Our Story
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-lg mx-auto mb-8">
-                Join us for an unforgettable dining experience and become part
-                of our continuing journey.
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-4">
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8"
-                >
-                  <Link href="/reservation">
-                    Reserve a Table
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="rounded-full px-8 border-foreground/20"
-                >
-                  <Link href="/menu">View Our Menu</Link>
-                </Button>
-              </div>
-            </FadeIn>
-          </Container>
-        </Section>
-      </main>
+      <section className="px-5 py-20 sm:px-8 md:py-28 lg:px-14">
+        <div className="mx-auto max-w-[1480px]">
+          <FadeIn className="mb-12 max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">Our Auckland story</p>
+            <h2 className="mt-4 font-serif text-4xl leading-none md:text-6xl">One family of restaurants.<br />Three local neighbourhoods.</h2>
+          </FadeIn>
+          <div className="grid border-t border-black/15 dark:border-white/15 md:grid-cols-3">
+            {locations.map((location, index) => (
+              <FadeIn key={location.place} delay={index * 0.1}>
+                <article className="border-b border-black/15 py-8 md:min-h-64 md:border-b-0 md:border-r md:px-8 md:first:pl-0 md:last:border-r-0 dark:border-white/15">
+                  <span className="font-serif text-5xl italic text-primary/35">0{index + 1}</span>
+                  <div className="mt-10 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary"><MapPin className="h-4 w-4" />{location.place}</div>
+                  <h3 className="mt-3 font-serif text-2xl">{location.name}</h3>
+                  <p className="mt-2 text-sm text-black/50 dark:text-white/50">{location.detail}</p>
+                </article>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Flame } from "lucide-react";
+import { Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Section, Container, SectionHeader } from "@/components/ui/section";
 import { FadeIn, StaggerContainer, StaggerItem, ScaleOnHover } from "@/components/animations";
@@ -13,31 +13,40 @@ export function SignatureDishes() {
     .filter((item) => item.isChefSpecial || item.isPopular)
     .slice(0, 6);
 
+const dishImages = [
+  "https://images.unsplash.com/photo-1585937421612-70a008356fbe?q=85&w=1000",
+  "https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=85&w=1000",
+  "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?q=85&w=1000",
+  "https://images.unsplash.com/photo-1596797038530-2c107229654b?q=85&w=1000",
+  "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=85&w=1000",
+  "https://images.unsplash.com/photo-1574484284002-952d92456975?q=85&w=1000",
+];
+
   return (
-    <Section className="bg-secondary/30">
+    <Section className="bg-[#f2eee5] text-[#171712] dark:bg-[#171713] dark:text-white">
       <Container>
         <FadeIn>
           <SectionHeader
-            label="Culinary Excellence"
-            title="Our Signature Creations"
-            description="Each dish is a masterpiece, crafted with passion and precision using the finest ingredients and time-honored recipes."
+            label="From the kitchen"
+            title="The dishes people return for."
+            description="Rich curries, fragrant rice and food from the fire—made for sharing, with spice adjusted to your table."
           />
         </FadeIn>
 
         <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {signatureDishes.map((dish) => (
+          {signatureDishes.map((dish, index) => (
             <StaggerItem key={dish.id}>
               <ScaleOnHover>
-                <div className="group relative bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 transition-colors">
+                <div className="group relative overflow-hidden border border-black/10 bg-[#faf8f2] transition-colors hover:border-primary/50 dark:border-white/10 dark:bg-[#1f1f1a]">
                   {/* Image */}
                   <div className="aspect-[4/3] relative overflow-hidden">
                     <div 
                       className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
                       style={{ 
-                        backgroundImage: `url('https://images.unsplash.com/photo-1585937421612-70a008356fbe?q=80&w=800')` 
+                        backgroundImage: `url('${dishImages[index]}')`
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
                     
                     {/* Badges */}
                     <div className="absolute top-4 left-4 flex gap-2">
@@ -55,7 +64,7 @@ export function SignatureDishes() {
                   </div>
 
                   {/* Content */}
-                  <div className="p-6">
+                  <div className="p-6 lg:p-7">
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <h3 className="font-serif text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
                         {dish.name}
@@ -112,10 +121,7 @@ export function SignatureDishes() {
             size="lg"
             className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8"
           >
-            <Link href="/menu">
-              View Full Menu
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
+            <Link href="/menu">View the full menu</Link>
           </Button>
         </FadeIn>
       </Container>

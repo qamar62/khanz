@@ -1,134 +1,96 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowRight, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/animations";
-
-const stats = [
-  { value: "7+", label: "Years of Excellence" },
-  { value: "50k+", label: "Happy Guests" },
-  { value: "200+", label: "Events Catered" },
-];
+import { motion, useScroll, useTransform } from "framer-motion";
+import { CalendarDays, MapPin } from "lucide-react";
+import { useRef } from "react";
 
 export function HeroSection() {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
+  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+  const imageScale = useTransform(scrollYProgress, [0, 1], [1.05, 1.16]);
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.72], [1, 0]);
+
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <motion.div
-          initial={{ scale: 1.08 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 2.4, ease: [0.21, 0.47, 0.32, 0.98] }}
-          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070')] bg-cover bg-center"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/30" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/40" />
-        <div className="absolute inset-0 bg-noise pointer-events-none" />
-      </div>
-
-      {/* Ambient Glow */}
-      <div className="absolute top-1/4 -left-20 w-[32rem] h-[32rem] bg-primary/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-
-      {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 lg:px-8 pt-32 pb-24">
-        <div className="max-w-4xl">
-          <FadeIn delay={0.1}>
-            <div className="flex items-center gap-4 mb-8">
-              <span className="h-px w-12 bg-primary" />
-              <span className="text-primary text-xs md:text-sm font-medium tracking-[0.35em] uppercase">
-                Premium Asian &amp; Mediterranean Cuisine
-              </span>
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.25}>
-            <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-foreground mb-8 leading-[1.05] text-balance">
-              Where Every Dish
-              <span className="block text-gradient">Tells a Story</span>
-            </h1>
-          </FadeIn>
-
-          <FadeIn delay={0.4}>
-            <p className="text-muted-foreground text-lg md:text-xl max-w-xl mb-10 leading-relaxed">
-              Khanz Group of Restaurants — authentic flavours reimagined with
-              contemporary elegance, served with warmth across Auckland.
-            </p>
-          </FadeIn>
-
-          <FadeIn delay={0.55}>
-            <div className="flex flex-wrap items-center gap-4">
-              <Button
-                asChild
-                size="lg"
-                className="group bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 h-14 text-base shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:-translate-y-0.5"
-              >
-                <Link href="/reservation">
-                  Reserve Your Table
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="rounded-full px-8 h-14 text-base border-foreground/25 bg-background/40 backdrop-blur-sm hover:bg-foreground/10 hover:border-primary/50 transition-all duration-300"
-              >
-                <Link href="/menu">Explore Menu</Link>
-              </Button>
-            </div>
-          </FadeIn>
-
-          {/* Social proof strip */}
-          <FadeIn delay={0.7}>
-            <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/50 backdrop-blur-sm px-4 py-2">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 fill-primary text-primary" />
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground">
-                Rated by <span className="text-foreground font-medium">1,800+</span> guests on Google
-              </span>
-            </div>
-          </FadeIn>
-
-          {/* Stats */}
-          <FadeIn delay={0.85}>
-            <div className="mt-14 pt-10 border-t border-border/40 flex flex-wrap gap-x-12 gap-y-8 max-w-lg">
-              {stats.map((stat) => (
-                <div key={stat.label} className="relative">
-                  <div className="font-serif text-3xl md:text-4xl font-bold text-gradient">
-                    {stat.value}
-                  </div>
-                  <div className="text-muted-foreground text-xs md:text-sm mt-1 tracking-wide">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </FadeIn>
-        </div>
-      </div>
-
-      {/* Scroll Indicator */}
+    <section
+      ref={ref}
+      className="relative min-h-[100svh] overflow-hidden bg-[#0a0a08] text-white"
+    >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.4, duration: 0.6 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2"
+        style={{ y: imageY, scale: imageScale }}
+        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?q=88&w=2200')] bg-cover bg-[58%_center] md:bg-center"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,6,4,.96)_0%,rgba(6,6,4,.76)_44%,rgba(6,6,4,.16)_78%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.35)_0%,transparent_25%,rgba(0,0,0,.45)_100%)]" />
+      <div className="absolute inset-0 bg-noise opacity-40" />
+
+      <motion.div
+        style={{ y: contentY, opacity: contentOpacity }}
+        className="relative z-10 mx-auto flex min-h-[100svh] max-w-[1480px] flex-col justify-end px-5 pb-12 pt-32 sm:px-8 md:justify-center md:pb-16 lg:px-14"
       >
-        <span className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground">
-          Scroll
-        </span>
+        <div className="max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="mb-7 flex items-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-[#e7bd64]"
+          >
+            <span className="h-px w-10 bg-[#e7bd64]" />
+            Auckland · Since 2018
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-4xl font-serif text-[clamp(3.5rem,9vw,8.8rem)] font-medium leading-[0.82] tracking-[-0.055em]"
+          >
+            Auckland,
+            <span className="block italic text-[#e7bd64]">served with soul.</span>
+          </motion.h1>
+
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.42 }}
+            className="mt-8 flex max-w-3xl flex-col gap-7 border-t border-white/20 pt-6 md:flex-row md:items-end md:justify-between"
+          >
+            <p className="max-w-xl text-base leading-relaxed text-white/72 md:text-lg">
+              Mediterranean generosity meets the warmth and spice of Asia—
+              cooked over flame, shared around the table, and made for our city.
+            </p>
+            <div className="flex flex-wrap gap-3 md:shrink-0">
+              <Link
+                href="/reservation"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#dca93f] px-6 text-sm font-semibold text-[#171109] transition hover:bg-[#edc56f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#edc56f]"
+              >
+                <CalendarDays className="h-4 w-4" />
+                Reserve a table
+              </Link>
+              <Link
+                href="#locations"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/35 bg-black/15 px-6 text-sm font-semibold text-white backdrop-blur-md transition hover:border-white/70 hover:bg-white/10"
+              >
+                <MapPin className="h-4 w-4" />
+                Find your Khanz
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+
         <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-          className="w-6 h-10 rounded-full border border-foreground/25 flex items-start justify-center p-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="mt-10 flex items-center gap-3 text-[0.65rem] uppercase tracking-[0.25em] text-white/50 md:absolute md:bottom-10 md:right-14 md:mt-0 md:[writing-mode:vertical-rl]"
         >
-          <div className="w-1 h-2 rounded-full bg-primary" />
+          <span>Scroll to discover</span>
+          <span className="h-12 w-px bg-gradient-to-b from-[#e7bd64] to-transparent md:h-16" />
         </motion.div>
       </motion.div>
     </section>

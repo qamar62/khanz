@@ -415,10 +415,10 @@ export const eventTypes = [
 ];
 
 export const contactInfo = {
-  phone: "+64 9 123 4567",
+  phone: "+64 9 250 1623",
   email: "info@khanz.co.nz",
-  address: "123 Queen Street, Auckland CBD, New Zealand",
-  whatsapp: "+64211234567",
+  address: "135 Great South Road, Papatoetoe, Auckland 2025",
+  whatsapp: "+6492501623",
   social: {
     instagram: "https://www.instagram.com/khanzrestaurant",
     facebook: "https://facebook.com/khanzrestaurant",

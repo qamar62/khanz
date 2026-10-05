@@ -1,231 +1,139 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { ChevronDown, UtensilsCrossed, Flame, Eye } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { PageHero, Section, Container } from "@/components/ui/section";
-import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
+import { motion } from "framer-motion";
+import { CalendarDays, Flame, Leaf, MapPin, UtensilsCrossed } from "lucide-react";
 import { menuItems, categoryLabels } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
-const branches = [
-  {
-    id: "khanz-mediterranean",
-    name: "Khanz Mediterranean Restaurant",
-    location: "Papatoetoe",
-    menuFile: "/menus/khanz-mediterranean-menu.pdf", // Replace with actual file path
-  },
-  {
-    id: "khanz-botany",
-    name: "Khanz Restaurant Botany",
-    location: "Flat Bush",
-    menuFile: "/menus/khanz-botany-menu.pdf", // Replace with actual file path
-  },
-  {
-    id: "khanz-takeaway",
-    name: "Khanz Takeaway",
-    location: "Panmure",
-    menuFile: "/menus/khanz-takeaway-menu.pdf", // Replace with actual file path
-  },
-];
+const categories = ["starters", "mains", "tandoori", "biryani", "desserts", "drinks"];
+
+const categoryNotes: Record<string, string> = {
+  starters: "Small plates to begin, pass around and share.",
+  mains: "Slow-cooked curries and generous house favourites.",
+  tandoori: "Marinated, charred and finished over fierce heat.",
+  biryani: "Aromatic basmati, layered spices and saffron.",
+  desserts: "A sweet final note, from classic to contemporary.",
+  drinks: "Cooling, spiced and made to refresh.",
+};
 
 export default function MenuPage() {
-  const [expandedBranch, setExpandedBranch] = useState<string | null>(
-    branches[0].id
-  );
-
-  const toggleBranch = (branchId: string) => {
-    setExpandedBranch(expandedBranch === branchId ? null : branchId);
-  };
-
-  // Group menu items by category
-  const categories = ["starters", "mains", "tandoori", "biryani", "desserts", "drinks"];
-  const itemsByCategory = categories.map((category) => ({
-    category,
-    items: menuItems.filter((item) => item.category === category),
-  }));
+  const [activeCategory, setActiveCategory] = useState("mains");
+  const visibleItems = menuItems.filter((item) => item.category === activeCategory);
 
   return (
-    <main>
-      <PageHero
-        label="Taste the Difference"
-        title="Our Menu"
-        subtitle="Discover a symphony of flavors crafted with passion and the finest ingredients"
-        backgroundImage="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=2070"
-      />
+    <main className="bg-[#f2eee5] text-[#171712] dark:bg-[#11110e] dark:text-white">
+      <section className="relative min-h-[76svh] overflow-hidden bg-[#0b0b09] text-white">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1547592180-85f173990554?q=88&w=2200')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,7,5,.96)_0%,rgba(7,7,5,.72)_48%,rgba(7,7,5,.18)_100%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/25" />
+        <div className="relative mx-auto flex min-h-[76svh] max-w-[1480px] items-end px-5 pb-16 pt-36 sm:px-8 lg:px-14 lg:pb-20">
+          <div className="max-w-4xl">
+            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#e7bd64]">
+              <UtensilsCrossed className="h-4 w-4" /> The Khanz menu
+            </motion.p>
+            <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="font-serif text-[clamp(4rem,10vw,9rem)] font-medium leading-[0.82] tracking-[-0.055em]">
+              Come hungry.
+              <span className="block italic text-[#e7bd64]">Leave happy.</span>
+            </motion.h1>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-8 flex max-w-3xl flex-col gap-6 border-t border-white/20 pt-6 md:flex-row md:items-center md:justify-between">
+              <p className="max-w-xl text-base leading-relaxed text-white/70 md:text-lg">
+                A menu that moves from bright, crisp starters to slow-cooked curries, fragrant biryani and dishes kissed by the tandoor.
+              </p>
+              <Link href="/reservation" className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-[#dca93f] px-6 text-sm font-semibold text-[#171109] hover:bg-[#edc56f]">
+                <CalendarDays className="h-4 w-4" /> Reserve a table
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
-      <Section className="pt-0 -mt-8">
-        <Container size="narrow">
-          <StaggerContainer className="space-y-4">
-            {branches.map((branch, index) => (
-              <StaggerItem key={branch.id}>
-                <div
-                  className={cn(
-                    "bg-card border rounded-2xl overflow-hidden transition-all duration-300",
-                    expandedBranch === branch.id
-                      ? "border-primary/40 shadow-lg shadow-primary/5"
-                      : "border-border hover:border-primary/30 hover:shadow-md"
-                  )}
-                >
-                  {/* Branch Header */}
-                  <div className="flex items-center justify-between gap-3 p-5 sm:p-6">
-                    <button
-                      onClick={() => toggleBranch(branch.id)}
-                      className="flex-1 flex items-center gap-4 text-left group"
-                    >
-                      <div
-                        className={cn(
-                          "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300",
-                          expandedBranch === branch.id
-                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
-                            : "bg-primary/10 text-primary group-hover:bg-primary/15"
-                        )}
-                      >
-                        <UtensilsCrossed className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <h3 className="font-serif text-lg sm:text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-                          {branch.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {branch.location}
-                        </p>
-                      </div>
-                    </button>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      {/* View Menu File Button */}
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full border-primary/30 text-foreground hover:bg-primary/10 hover:border-primary/50"
-                      >
-                        <a
-                          href={branch.menuFile}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Eye className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">View Menu</span>
-                        </a>
-                      </Button>
-
-                      {/* Expand/Collapse Button */}
-                      <button
-                        onClick={() => toggleBranch(branch.id)}
-                        className="w-9 h-9 flex items-center justify-center rounded-full border border-border hover:border-primary/40 hover:text-primary transition-colors"
-                        aria-label={
-                          expandedBranch === branch.id
-                            ? "Collapse menu"
-                            : "Expand menu"
-                        }
-                      >
-                        <motion.div
-                          animate={{ rotate: expandedBranch === branch.id ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                        </motion.div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Expandable Menu Content */}
-                  <AnimatePresence>
-                    {expandedBranch === branch.id && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="border-t border-border p-5 sm:p-6 lg:p-8 space-y-10">
-                          {itemsByCategory.map(({ category, items }) => (
-                            <div key={category}>
-                              <div className="flex items-center gap-3 mb-5">
-                                <span className="w-1.5 h-1.5 rotate-45 bg-primary shrink-0" />
-                                <h4 className="font-serif text-lg lg:text-xl font-semibold text-foreground">
-                                  {categoryLabels[category]}
-                                </h4>
-                                <span className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
-                              </div>
-                              <div className="space-y-4">
-                                {items.map((item) => (
-                                  <div
-                                    key={item.id}
-                                    className="flex justify-between items-start gap-4 group"
-                                  >
-                                    <div className="flex-1">
-                                      <div className="flex items-start gap-2 mb-1">
-                                        <h5 className="font-medium text-foreground group-hover:text-primary transition-colors">
-                                          {item.name}
-                                        </h5>
-                                        {item.isChefSpecial && (
-                                          <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded">
-                                            Chef's Special
-                                          </span>
-                                        )}
-                                        {item.isPopular && !item.isChefSpecial && (
-                                          <span className="px-2 py-0.5 bg-secondary text-foreground text-xs font-medium rounded">
-                                            Popular
-                                          </span>
-                                        )}
-                                      </div>
-                                      <p className="text-sm text-muted-foreground leading-relaxed">
-                                        {item.description}
-                                      </p>
-                                      <div className="flex items-center gap-3 mt-2">
-                                        {item.spiceLevel && (
-                                          <div className="flex items-center gap-1">
-                                            {Array.from({ length: 3 }).map((_, i) => (
-                                              <Flame
-                                                key={i}
-                                                className={cn(
-                                                  "h-3 w-3",
-                                                  i < item.spiceLevel!
-                                                    ? "text-orange-500"
-                                                    : "text-muted-foreground/30"
-                                                )}
-                                              />
-                                            ))}
-                                          </div>
-                                        )}
-                                        {item.dietary && item.dietary.length > 0 && (
-                                          <div className="flex gap-1.5">
-                                            {item.dietary.map((label) => (
-                                              <span
-                                                key={label}
-                                                className="px-2 py-0.5 rounded-full border border-border text-[11px] text-muted-foreground capitalize"
-                                              >
-                                                {label.replace("-", " ")}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="font-serif text-lg font-semibold text-primary whitespace-nowrap">
-                                      ${item.price}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </StaggerItem>
+      <section className="border-b border-black/10 bg-[#f2eee5]/95 dark:border-white/10 dark:bg-[#11110e]/95">
+        <div className="mx-auto max-w-[1480px] overflow-x-auto px-5 sm:px-8 lg:px-14">
+          <div className="flex min-w-max gap-1 py-4" role="tablist" aria-label="Menu categories">
+            {categories.map((category) => (
+              <button
+                key={category}
+                role="tab"
+                aria-selected={activeCategory === category}
+                onClick={() => setActiveCategory(category)}
+                className={cn(
+                  "rounded-full px-5 py-2.5 text-sm font-semibold transition",
+                  activeCategory === category
+                    ? "bg-[#171712] text-white dark:bg-[#dca93f] dark:text-[#171109]"
+                    : "text-black/55 hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                )}
+              >
+                {categoryLabels[category]}
+              </button>
             ))}
-          </StaggerContainer>
-        </Container>
-      </Section>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-5 py-16 sm:px-8 md:py-24 lg:px-14">
+        <div className="mx-auto max-w-[1480px]">
+          <div className="grid gap-12 lg:grid-cols-[0.55fr_1fr] lg:gap-20">
+            <div className="lg:sticky lg:top-32 lg:self-start">
+              <span className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">Selected course</span>
+              <h2 className="mt-4 font-serif text-5xl leading-none tracking-[-0.035em] md:text-6xl">
+                {categoryLabels[activeCategory]}
+              </h2>
+              <p className="mt-5 max-w-sm text-base leading-relaxed text-black/55 dark:text-white/55">
+                {categoryNotes[activeCategory]}
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3 text-xs uppercase tracking-[0.15em] text-black/45 dark:text-white/45">
+                <span className="inline-flex items-center gap-2"><Flame className="h-4 w-4 text-orange-500" /> Spice level</span>
+                <span className="inline-flex items-center gap-2"><Leaf className="h-4 w-4 text-emerald-600" /> Dietary options</span>
+              </div>
+            </div>
+
+            <motion.div key={activeCategory} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="grid gap-x-10 md:grid-cols-2">
+              {visibleItems.map((item, index) => (
+                <article key={item.id} className="group border-t border-black/15 py-7 dark:border-white/15">
+                  <div className="flex items-start justify-between gap-5">
+                    <div>
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <h3 className="font-serif text-2xl font-semibold transition group-hover:text-primary">{item.name}</h3>
+                        {(item.isChefSpecial || item.isPopular) && (
+                          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-primary">
+                            {item.isChefSpecial ? "Chef's pick" : "Popular"}
+                          </span>
+                        )}
+                      </div>
+                      <p className="max-w-md text-sm leading-relaxed text-black/55 dark:text-white/55">{item.description}</p>
+                    </div>
+                    <span className="font-serif text-2xl font-semibold text-primary">${item.price}</span>
+                  </div>
+                  <div className="mt-4 flex min-h-6 flex-wrap items-center gap-3">
+                    {item.spiceLevel ? (
+                      <div className="flex gap-1" aria-label={`Spice level ${item.spiceLevel} of 3`}>
+                        {[0, 1, 2].map((level) => <Flame key={level} className={cn("h-3.5 w-3.5", level < item.spiceLevel! ? "text-orange-500" : "text-black/15 dark:text-white/15")} />)}
+                      </div>
+                    ) : null}
+                    {item.dietary?.map((label) => (
+                      <span key={label} className="text-xs capitalize text-emerald-700 dark:text-emerald-400">{label.replace("-", " ")}</span>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#181814] px-5 py-16 text-white sm:px-8 lg:px-14">
+        <div className="mx-auto flex max-w-[1480px] flex-col gap-8 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#e7bd64]">Across Auckland</p>
+            <h2 className="mt-3 font-serif text-4xl md:text-5xl">One menu. Three ways to join us.</h2>
+          </div>
+          <div className="flex flex-wrap gap-3 text-sm text-white/70">
+            {["Papatoetoe", "Flat Bush", "Panmure"].map((place) => <span key={place} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2"><MapPin className="h-4 w-4 text-[#e7bd64]" />{place}</span>)}
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

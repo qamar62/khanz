@@ -1,6 +1,7 @@
 import {
   HeroSection,
-  AboutPreview,
+  ScrollStory,
+  SignatureDishes,
   CateringSection,
   ReservationBanner,
   InstagramSection,
@@ -12,8 +13,11 @@ export default function HomePage() {
   return (
     <main>
       <HeroSection />
-      <AboutPreview />
-      <BranchesSection />
+      <ScrollStory />
+      <SignatureDishes />
+      <div id="locations">
+        <BranchesSection />
+      </div>
       <CateringSection />
       <GoogleReviewsSection />
       <ReservationBanner />
