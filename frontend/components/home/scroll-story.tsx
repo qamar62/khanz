@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
-import { useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const chapters = [
   {
@@ -30,67 +30,56 @@ const chapters = [
   },
 ];
 
+const ease = [0.22, 1, 0.36, 1] as const;
+
+/** Our story in three chapters. Scrolls normally; each chapter fades in as it enters the viewport. */
 export function ScrollStory() {
-  const ref = useRef<HTMLElement>(null);
-  const [active, setActive] = useState(0);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
-  const progress = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
-
-  useMotionValueEvent(scrollYProgress, "change", (value) => {
-    setActive(Math.min(chapters.length - 1, Math.floor(value * chapters.length)));
-  });
-
   return (
-    <section ref={ref} className="relative h-[300vh] bg-[#171c0f] text-white">
-      <div className="sticky top-0 h-screen overflow-hidden">
-        {chapters.map((chapter, index) => (
-          <motion.div
-            key={chapter.number}
-            animate={{ opacity: active === index ? 1 : 0, scale: active === index ? 1 : 1.045 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url('${chapter.image}')` }}
-          />
-        ))}
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,11,8,.96)_0%,rgba(11,11,8,.76)_43%,rgba(11,11,8,.2)_80%)]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
+    <section className="bg-[#171c0f] px-5 py-20 text-white sm:px-8 md:py-28 lg:px-14">
+      <div className="mx-auto max-w-[1480px] space-y-20 md:space-y-28">
+        {chapters.map((chapter, index) => {
+          const flipped = index % 2 === 1;
+          return (
+            <article key={chapter.number} className="grid items-center gap-8 md:grid-cols-2 md:gap-14 lg:gap-20">
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.8, ease }}
+                className={cn("relative aspect-[4/3] overflow-hidden", flipped && "md:order-2")}
+              >
+                <motion.div
+                  initial={{ scale: 1.08 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 1.2, ease }}
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ backgroundImage: `url('${chapter.image}')` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                <span className="absolute bottom-4 left-4 text-xs uppercase tracking-[0.24em] text-white/80">{chapter.note}</span>
+              </motion.div>
 
-        <div className="relative z-10 mx-auto grid h-full max-w-[1480px] grid-cols-1 content-end px-5 pb-14 pt-28 sm:px-8 md:content-center lg:grid-cols-[1fr_0.72fr] lg:px-14">
-          <div className="max-w-2xl">
-            <div className="mb-8 flex items-center gap-4">
-              <span className="font-serif text-lg italic text-[#d8ad52]">{chapters[active].number}</span>
-              <span className="h-px w-10 bg-white/25" />
-              <span className="text-xs font-semibold uppercase tracking-[0.28em] text-white/55">{chapters[active].eyebrow}</span>
-            </div>
-            <motion.h2
-              key={`title-${active}`}
-              initial={{ opacity: 0, y: 28 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65 }}
-              className="whitespace-pre-line font-serif text-[clamp(3.1rem,7vw,7rem)] font-medium leading-[0.9] tracking-[-0.045em]"
-            >
-              {chapters[active].title}
-            </motion.h2>
-            <motion.p
-              key={`copy-${active}`}
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.1 }}
-              className="mt-7 max-w-xl text-base leading-relaxed text-white/68 md:text-lg"
-            >
-              {chapters[active].copy}
-            </motion.p>
-          </div>
-
-          <div className="mt-9 flex items-end justify-between border-t border-white/20 pt-5 lg:mt-0 lg:self-end">
-            <span className="text-xs uppercase tracking-[0.24em] text-white/55">{chapters[active].note}</span>
-            <span className="font-serif text-4xl italic text-white/20">{active + 1}/3</span>
-          </div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 z-20 h-1 bg-white/10">
-          <motion.div style={{ width: progress }} className="h-full bg-[#c79532]" />
-        </div>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.7, delay: 0.12, ease }}
+                className={cn("max-w-xl", flipped && "md:order-1 md:justify-self-end")}
+              >
+                <div className="mb-6 flex items-center gap-4">
+                  <span className="font-serif text-lg italic text-[#d8ad52]">{chapter.number}</span>
+                  <span className="h-px w-10 bg-white/25" />
+                  <span className="text-xs font-semibold uppercase tracking-[0.28em] text-white/55">{chapter.eyebrow}</span>
+                </div>
+                <h2 className="whitespace-pre-line font-serif text-[clamp(2.6rem,5vw,5rem)] font-medium leading-[0.92] tracking-[-0.04em]">
+                  {chapter.title}
+                </h2>
+                <p className="mt-6 text-base leading-relaxed text-white/68 md:text-lg">{chapter.copy}</p>
+              </motion.div>
+            </article>
+          );
+        })}
       </div>
     </section>
   );

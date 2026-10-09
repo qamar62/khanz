@@ -1,36 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { CalendarDays, MapPin } from "lucide-react";
-import { useRef } from "react";
 
 export function HeroSection() {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
-  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
-  const imageScale = useTransform(scrollYProgress, [0, 1], [1.05, 1.16]);
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.72], [1, 0]);
-
   return (
     <section
-      ref={ref}
       className="relative min-h-[100svh] overflow-hidden bg-[#11170c] text-white"
     >
       <motion.div
-        style={{ y: imageY, scale: imageScale }}
+        initial={{ scale: 1.08 }}
+        animate={{ scale: 1.03 }}
+        transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
         className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?q=88&w=2200')] bg-cover bg-[58%_center] md:bg-center"
       />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,6,4,.96)_0%,rgba(6,6,4,.76)_44%,rgba(6,6,4,.16)_78%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.35)_0%,transparent_25%,rgba(0,0,0,.45)_100%)]" />
       <div className="absolute inset-0 bg-noise opacity-40" />
 
-      <motion.div
-        style={{ y: contentY, opacity: contentOpacity }}
+      <div
         className="relative z-10 mx-auto flex min-h-[100svh] max-w-[1480px] flex-col justify-end px-5 pb-12 pt-32 sm:px-8 md:justify-center md:pb-16 lg:px-14"
       >
         <div className="max-w-5xl">
@@ -89,10 +78,10 @@ export function HeroSection() {
           transition={{ delay: 1 }}
           className="mt-10 flex items-center gap-3 text-[0.65rem] uppercase tracking-[0.25em] text-white/50 md:absolute md:bottom-10 md:right-14 md:mt-0 md:[writing-mode:vertical-rl]"
         >
-          <span>Scroll to discover</span>
+          <span>Discover more</span>
           <span className="h-12 w-px bg-gradient-to-b from-[#d8ad52] to-transparent md:h-16" />
         </motion.div>
-      </motion.div>
+      </div>
     </section>
   );
 }
