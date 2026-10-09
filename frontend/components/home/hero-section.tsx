@@ -19,7 +19,7 @@ export function HeroSection() {
   return (
     <section
       ref={ref}
-      className="relative min-h-[100svh] overflow-hidden bg-[#0a0a08] text-white"
+      className="relative min-h-[100svh] overflow-hidden bg-[#11170c] text-white"
     >
       <motion.div
         style={{ y: imageY, scale: imageScale }}
@@ -38,9 +38,9 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="mb-7 flex items-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-[#e7bd64]"
+            className="mb-7 flex items-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-[#d8ad52]"
           >
-            <span className="h-px w-10 bg-[#e7bd64]" />
+            <span className="h-px w-10 bg-[#d8ad52]" />
             Auckland · Since 2018
           </motion.div>
 
@@ -51,7 +51,7 @@ export function HeroSection() {
             className="max-w-4xl font-serif text-[clamp(3.5rem,9vw,8.8rem)] font-medium leading-[0.82] tracking-[-0.055em]"
           >
             Auckland,
-            <span className="block italic text-[#e7bd64]">served with soul.</span>
+            <span className="block italic text-[#d8ad52]">served with soul.</span>
           </motion.h1>
 
           <motion.div
@@ -67,7 +67,7 @@ export function HeroSection() {
             <div className="flex flex-wrap gap-3 md:shrink-0">
               <Link
                 href="/reservation"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#dca93f] px-6 text-sm font-semibold text-[#171109] transition hover:bg-[#edc56f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#edc56f]"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#c79532] px-6 text-sm font-semibold text-[#17200f] transition hover:bg-[#dfb85e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#dfb85e]"
               >
                 <CalendarDays className="h-4 w-4" />
                 Reserve a table
@@ -90,7 +90,7 @@ export function HeroSection() {
           className="mt-10 flex items-center gap-3 text-[0.65rem] uppercase tracking-[0.25em] text-white/50 md:absolute md:bottom-10 md:right-14 md:mt-0 md:[writing-mode:vertical-rl]"
         >
           <span>Scroll to discover</span>
-          <span className="h-12 w-px bg-gradient-to-b from-[#e7bd64] to-transparent md:h-16" />
+          <span className="h-12 w-px bg-gradient-to-b from-[#d8ad52] to-transparent md:h-16" />
         </motion.div>
       </motion.div>
     </section>

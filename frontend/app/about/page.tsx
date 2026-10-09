@@ -20,17 +20,17 @@ const locations = [
 
 export default function AboutPage() {
   return (
-    <main className="bg-[#f2eee5] text-[#171712] dark:bg-[#11110e] dark:text-white">
-      <section className="relative min-h-[88svh] overflow-hidden bg-[#0b0b09] text-white">
+    <main className="bg-[#f4ecdc] text-[#242b18] dark:bg-[#171c0f] dark:text-white">
+      <section className="relative min-h-[88svh] overflow-hidden bg-[#11170c] text-white">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?q=88&w=2200')] bg-cover bg-center" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,7,5,.94)_0%,rgba(7,7,5,.62)_50%,rgba(7,7,5,.2)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/25" />
         <div className="relative mx-auto flex min-h-[88svh] max-w-[1480px] items-end px-5 pb-16 pt-36 sm:px-8 lg:px-14 lg:pb-20">
           <div className="max-w-5xl">
-            <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-7 text-xs font-semibold uppercase tracking-[0.3em] text-[#e7bd64]">Our story · Auckland since 2018</motion.p>
+            <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-7 text-xs font-semibold uppercase tracking-[0.3em] text-[#d8ad52]">Our story · Auckland since 2018</motion.p>
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="font-serif text-[clamp(3.8rem,9.5vw,8.5rem)] font-medium leading-[0.84] tracking-[-0.055em]">
               Food is how we
-              <span className="block italic text-[#e7bd64]">bring people closer.</span>
+              <span className="block italic text-[#d8ad52]">bring people closer.</span>
             </motion.h1>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-8 max-w-2xl border-t border-white/20 pt-6 text-base leading-relaxed text-white/70 md:text-lg">
               Khanz grew from one Auckland dining room and a simple belief: familiar flavours, made with care, can turn an ordinary meal into a memory.
@@ -45,7 +45,7 @@ export default function AboutPage() {
             <div className="aspect-[4/5] overflow-hidden">
               <div className="h-full w-full bg-[url('https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?q=88&w=1200')] bg-cover bg-center" />
             </div>
-            <div className="absolute -bottom-6 right-0 bg-[#dca93f] px-6 py-5 text-[#171109] sm:right-8">
+            <div className="absolute -bottom-6 right-0 bg-[#c79532] px-6 py-5 text-[#17200f] sm:right-8">
               <span className="block font-serif text-4xl">2018</span>
               <span className="text-xs font-bold uppercase tracking-[0.18em]">Where it began</span>
             </div>
@@ -60,20 +60,20 @@ export default function AboutPage() {
               <p>Across every Khanz location, the promise stays the same: full flavour, genuine warmth and a table worth returning to.</p>
             </div>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/menu" className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#171712] px-6 text-sm font-semibold text-white hover:bg-primary dark:bg-primary dark:text-primary-foreground">Explore the menu</Link>
+              <Link href="/menu" className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#242b18] px-6 text-sm font-semibold text-white hover:bg-primary dark:bg-primary dark:text-primary-foreground">Explore the menu</Link>
               <Link href="/reservation" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-black/20 px-6 text-sm font-semibold hover:border-primary dark:border-white/20"><CalendarDays className="h-4 w-4" /> Reserve a table</Link>
             </div>
           </FadeIn>
         </div>
       </section>
 
-      <section className="bg-[#171713] px-5 py-20 text-white sm:px-8 md:py-28 lg:px-14">
+      <section className="bg-[#202617] px-5 py-20 text-white sm:px-8 md:py-28 lg:px-14">
         <div className="mx-auto max-w-[1480px]">
           <FadeIn>
             <div className="mb-14 grid gap-6 border-b border-white/15 pb-10 md:grid-cols-2 md:items-end">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#e7bd64]">What guides us</p>
-                <h2 className="mt-4 font-serif text-4xl leading-none md:text-6xl">Simple values.<br /><span className="italic text-[#e7bd64]">Felt in every detail.</span></h2>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8ad52]">What guides us</p>
+                <h2 className="mt-4 font-serif text-4xl leading-none md:text-6xl">Simple values.<br /><span className="italic text-[#d8ad52]">Felt in every detail.</span></h2>
               </div>
               <p className="max-w-lg text-base leading-relaxed text-white/55 md:justify-self-end">From the kitchen pass to the last plate cleared, these are the principles behind the experience.</p>
             </div>
@@ -81,9 +81,9 @@ export default function AboutPage() {
           <StaggerContainer className="grid gap-px bg-white/10 md:grid-cols-2 lg:grid-cols-4">
             {values.map((value, index) => (
               <StaggerItem key={value.title}>
-                <article className="h-full bg-[#171713] p-7 lg:p-8">
+                <article className="h-full bg-[#202617] p-7 lg:p-8">
                   <div className="flex items-center justify-between">
-                    <value.icon className="h-6 w-6 text-[#e7bd64]" />
+                    <value.icon className="h-6 w-6 text-[#d8ad52]" />
                     <span className="font-serif text-2xl italic text-white/20">0{index + 1}</span>
                   </div>
                   <h3 className="mt-12 font-serif text-2xl">{value.title}</h3>

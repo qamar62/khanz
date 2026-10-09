@@ -10,22 +10,43 @@ interface ApiResponse<T> {
   error?: string;
 }
 
+interface Paginated<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
 // Reservation Types
+export type PaymentMethod = 'card' | 'cash' | 'cash_on_pickup' | 'cash_on_delivery';
+
 export interface ReservationData {
   name: string;
   email: string;
   phone: string;
   date: string;
-  time: string;
-  guests: number;
+  time?: string;
+  time_slot_id?: number;
+  adult_guests: number;
+  child_guests: number;
+  guests?: number;
   occasion?: string;
   special_requests?: string;
   branch?: string;
+  branch_slug?: string;
+  payment_method?: PaymentMethod;
+  source?: 'web' | 'mobile' | 'admin' | 'phone' | 'walk_in' | 'partner';
 }
 
 export interface Reservation extends ReservationData {
   id: number;
+  reference: string;
   status: string;
+  payment_status: string;
+  deposit_required: boolean;
+  deposit_amount: string;
+  payment_method: PaymentMethod;
+  branch_details?: Branch;
   google_calendar_event_id?: string;
   is_upcoming: boolean;
   created_at: string;
@@ -80,6 +101,87 @@ export interface Branch {
   is_active: boolean;
   google_maps_url?: string;
   description?: string;
+  code?: string;
+  slug: string;
+  booking_enabled: boolean;
+  currency: string;
+  booking_interval_minutes: number;
+  default_booking_duration_minutes: number;
+  min_advance_minutes: number;
+  max_advance_days: number;
+  max_online_party_size: number;
+  online_capacity: number;
+  deposit_policy: 'none' | 'fixed' | 'per_guest';
+  deposit_amount: string;
+  accepted_payment_methods?: PaymentMethod[];
+  online_payments_enabled?: boolean;
+  sort_order: number;
+}
+
+export interface ReservationLookup {
+  id: number;
+  reference: string;
+  status: string;
+  payment_status: string;
+  payment_method: PaymentMethod;
+  deposit_required: boolean;
+  deposit_amount: string;
+  date: string;
+  time: string;
+  adult_guests: number;
+  child_guests: number;
+  branch_name: string;
+  currency: string;
+}
+
+export interface MenuItemOption {
+  id: number;
+  name: string;
+  additional_price: string;
+  display_order: number;
+}
+
+export interface MenuItem {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  price: string;
+  dietary_labels: string[];
+  spice_level: number;
+  is_popular: boolean;
+  is_chef_special: boolean;
+  display_order: number;
+  branch_slugs: string[];
+  options: MenuItemOption[];
+}
+
+export interface MenuCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  display_order: number;
+  items: MenuItem[];
+}
+
+export interface AvailabilitySlot {
+  id: number;
+  time: string;
+  label: string;
+  available: boolean;
+  capacity: number;
+  booked_guests: number;
+  remaining_capacity: number;
+}
+
+/** Flatten DRF error payloads ({field: ["msg"]}) into one readable sentence. */
+function readableError(raw: unknown): string {
+  if (!raw) return '';
+  if (typeof raw === 'string') return raw;
+  if (Array.isArray(raw)) return raw.map(readableError).filter(Boolean).join(' ');
+  if (typeof raw === 'object') return Object.values(raw as Record<string, unknown>).map(readableError).filter(Boolean).join(' ');
+  return String(raw);
 }
 
 /**
@@ -100,9 +202,8 @@ async function apiFetch<T>(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      return {
-        error: errorData.detail || errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-      };
+      const rawError = errorData.detail || errorData.message || errorData;
+      return { error: readableError(rawError) || `HTTP ${response.status}: ${response.statusText}` };
     }
 
     const data = await response.json();
@@ -127,6 +228,30 @@ export const reservationAPI = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+
+  availability: async (branch: string, date: string, guests: number): Promise<ApiResponse<{ branch: Branch; date: string; slots: AvailabilitySlot[] }>> => {
+    const params = new URLSearchParams({ branch, date, guests: String(guests) });
+    return apiFetch<{ branch: Branch; date: string; slots: AvailabilitySlot[] }>(`/reservations/availability/?${params}`);
+  },
+
+  createPaymentIntent: async (id: number, email: string): Promise<ApiResponse<{ client_secret: string; publishable_key: string }>> => {
+    return apiFetch<{ client_secret: string; publishable_key: string }>(`/reservations/${id}/payment-intent/`, {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  createCheckoutSession: async (id: number, email: string): Promise<ApiResponse<{ checkout_url: string }>> => {
+    return apiFetch<{ checkout_url: string }>(`/reservations/${id}/checkout-session/`, {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  lookup: async (reference: string, email: string): Promise<ApiResponse<ReservationLookup>> => {
+    const params = new URLSearchParams({ reference, email });
+    return apiFetch<ReservationLookup>(`/reservations/lookup/?${params}`);
   },
 
   /**
@@ -275,7 +400,9 @@ export const branchAPI = {
    * Get all active branches
    */
   list: async (): Promise<ApiResponse<Branch[]>> => {
-    return apiFetch<Branch[]>('/branches/');
+    const response = await apiFetch<Branch[] | Paginated<Branch>>('/branches/');
+    if (response.error || !response.data) return { error: response.error || 'Unable to load branches.' };
+    return { data: Array.isArray(response.data) ? response.data : response.data.results };
   },
 
   /**
@@ -286,9 +413,17 @@ export const branchAPI = {
   },
 };
 
+export const menuAPI = {
+  list: async (branch?: string): Promise<ApiResponse<MenuCategory[]>> => {
+    const suffix = branch ? `?branch=${encodeURIComponent(branch)}` : '';
+    return apiFetch<MenuCategory[]>(`/menus/${suffix}`);
+  },
+};
+
 export default {
   reservations: reservationAPI,
   contacts: contactAPI,
   catering: cateringAPI,
   branches: branchAPI,
+  menus: menuAPI,
 };

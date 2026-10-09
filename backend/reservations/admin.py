@@ -1,247 +1,198 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Reservation, ContactMessage, CateringRequest, Branch
-from .utils.google_calendar import create_calendar_event, delete_calendar_event
+
+from .models import (
+    Branch,
+    BranchTimeSlot,
+    CateringRequest,
+    ContactMessage,
+    MenuDocument,
+    MenuCategory,
+    MenuItem,
+    MenuItemOption,
+    Payment,
+    Reservation,
+    ReservationEvent,
+    RestaurantTable,
+)
+
+
+STATUS_COLORS = {
+    'pending': '#b8860b',
+    'payment_pending': '#a35d00',
+    'confirmed': '#55733b',
+    'waiting': '#72622d',
+    'table_ready': '#2f7f68',
+    'seated': '#236b8e',
+    'completed': '#52606d',
+    'cancelled': '#9f3a38',
+    'no_show': '#6b3d5c',
+}
+
+
+class PaymentInline(admin.TabularInline):
+    model = Payment
+    extra = 0
+    fields = ['payment_type', 'status', 'amount', 'currency', 'external_payment_intent_id', 'created_at']
+    readonly_fields = fields
+
+
+class ReservationEventInline(admin.TabularInline):
+    model = ReservationEvent
+    extra = 0
+    fields = ['event_type', 'from_status', 'to_status', 'actor', 'note', 'created_at']
+    readonly_fields = fields
+    can_delete = False
 
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
     list_display = [
-        'name', 'date', 'time', 'guests', 'status_badge',
-        'occasion', 'created_at'
+        'reference', 'name', 'branch_location', 'date', 'time', 'adult_guests',
+        'child_guests', 'guests',
+        'status_badge', 'payment_method', 'payment_status', 'source', 'created_at',
     ]
-    list_filter = ['status', 'date', 'occasion', 'created_at']
-    search_fields = ['name', 'email', 'phone']
-    readonly_fields = ['google_calendar_event_id', 'created_at', 'updated_at']
+    list_filter = ['branch_location', 'status', 'payment_method', 'payment_status', 'source', 'date', 'occasion']
+    search_fields = ['reference', 'name', 'email', 'phone', 'external_reference']
+    readonly_fields = [
+        'reference', 'branch', 'google_calendar_event_id', 'arrival_time',
+        'seated_at', 'completed_at', 'cancelled_at', 'created_at', 'updated_at',
+    ]
+    filter_horizontal = ['tables']
     date_hierarchy = 'date'
-    
+    list_select_related = ['branch_location']
+    inlines = [PaymentInline, ReservationEventInline]
     fieldsets = (
-        ('Guest Information', {
-            'fields': ('name', 'email', 'phone')
-        }),
-        ('Reservation Details', {
-            'fields': ('date', 'time', 'guests', 'occasion', 'special_requests')
-        }),
-        ('Status & Tracking', {
-            'fields': ('status', 'google_calendar_event_id')
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
+        ('Booking', {'fields': ('reference', 'branch_location', 'date', 'time_slot', 'time', 'duration_minutes', 'adult_guests', 'child_guests', 'guests', 'tables')}),
+        ('Guest', {'fields': ('name', 'email', 'phone', 'occasion', 'special_requests')}),
+        ('Operations', {'fields': ('status', 'source', 'external_reference', 'internal_notes', 'confirmation_attempts')}),
+        ('Payment', {'fields': ('payment_method', 'deposit_required', 'deposit_amount', 'payment_status')}),
+        ('Integrations', {'fields': ('branch', 'google_calendar_event_id'), 'classes': ('collapse',)}),
+        ('Timeline', {'fields': ('arrival_time', 'seated_at', 'completed_at', 'cancelled_at', 'created_at', 'updated_at'), 'classes': ('collapse',)}),
     )
-    
-    actions = ['sync_to_calendar', 'mark_confirmed', 'mark_completed', 'mark_cancelled']
-    
+    actions = ['mark_confirmed', 'mark_table_ready', 'mark_seated', 'mark_completed', 'mark_no_show', 'mark_cancelled']
+
+    @admin.display(description='Status', ordering='status')
     def status_badge(self, obj):
-        """Display status with color badge"""
-        colors = {
-            'pending': '#FFA500',
-            'confirmed': '#28A745',
-            'cancelled': '#DC3545',
-            'completed': '#6C757D',
-        }
-        color = colors.get(obj.status, '#6C757D')
-        return format_html(
-            '<span style="background-color: {}; color: white; padding: 3px 10px; '
-            'border-radius: 3px; font-weight: bold;">{}</span>',
-            color,
-            obj.get_status_display()
-        )
-    status_badge.short_description = 'Status'
-    
-    def sync_to_calendar(self, request, queryset):
-        """Sync selected reservations to Google Calendar"""
-        count = 0
-        for reservation in queryset:
-            try:
-                if not reservation.google_calendar_event_id:
-                    event_id = create_calendar_event(reservation)
-                    reservation.google_calendar_event_id = event_id
-                    reservation.save()
-                    count += 1
-            except Exception as e:
-                self.message_user(
-                    request,
-                    f"Failed to sync {reservation.name}: {str(e)}",
-                    level='error'
-                )
-        
-        self.message_user(
-            request,
-            f"Successfully synced {count} reservation(s) to Google Calendar."
-        )
-    sync_to_calendar.short_description = "Sync to Google Calendar"
-    
-    def mark_confirmed(self, request, queryset):
-        """Mark reservations as confirmed"""
-        updated = queryset.update(status='confirmed')
-        self.message_user(request, f"{updated} reservation(s) marked as confirmed.")
-    mark_confirmed.short_description = "Mark as Confirmed"
-    
-    def mark_completed(self, request, queryset):
-        """Mark reservations as completed"""
-        updated = queryset.update(status='completed')
-        self.message_user(request, f"{updated} reservation(s) marked as completed.")
-    mark_completed.short_description = "Mark as Completed"
-    
-    def mark_cancelled(self, request, queryset):
-        """Mark reservations as cancelled"""
-        for reservation in queryset:
-            reservation.status = 'cancelled'
-            reservation.save()
-            
-            # Remove from Google Calendar
-            if reservation.google_calendar_event_id:
-                try:
-                    delete_calendar_event(reservation.google_calendar_event_id)
-                except Exception:
-                    pass
-        
-        self.message_user(request, f"{queryset.count()} reservation(s) cancelled.")
-    mark_cancelled.short_description = "Cancel Reservations"
+        color = STATUS_COLORS.get(obj.status, '#52606d')
+        return format_html('<span style="background:{};color:#fff;padding:4px 9px;border-radius:12px;font-weight:600">{}</span>', color, obj.get_status_display())
+
+    def _update_status(self, request, queryset, value):
+        count = queryset.update(status=value)
+        self.message_user(request, f'{count} reservation(s) updated to {value}.')
+
+    @admin.action(description='Mark selected as confirmed')
+    def mark_confirmed(self, request, queryset): self._update_status(request, queryset, 'confirmed')
+
+    @admin.action(description='Mark selected as table ready')
+    def mark_table_ready(self, request, queryset): self._update_status(request, queryset, 'table_ready')
+
+    @admin.action(description='Mark selected as seated')
+    def mark_seated(self, request, queryset): self._update_status(request, queryset, 'seated')
+
+    @admin.action(description='Mark selected as completed')
+    def mark_completed(self, request, queryset): self._update_status(request, queryset, 'completed')
+
+    @admin.action(description='Mark selected as no-show')
+    def mark_no_show(self, request, queryset): self._update_status(request, queryset, 'no_show')
+
+    @admin.action(description='Mark selected as cancelled')
+    def mark_cancelled(self, request, queryset): self._update_status(request, queryset, 'cancelled')
 
 
-@admin.register(ContactMessage)
-class ContactMessageAdmin(admin.ModelAdmin):
-    list_display = ['name', 'email', 'status_badge', 'created_at']
-    list_filter = ['status', 'created_at']
-    search_fields = ['name', 'email', 'phone', 'message']
-    readonly_fields = ['created_at', 'updated_at']
-    date_hierarchy = 'created_at'
-    
-    fieldsets = (
-        ('Contact Information', {
-            'fields': ('name', 'email', 'phone')
-        }),
-        ('Message', {
-            'fields': ('message', 'status')
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
-    
-    actions = ['mark_read', 'mark_replied', 'archive']
-    
-    def status_badge(self, obj):
-        """Display status with color badge"""
-        colors = {
-            'new': '#007BFF',
-            'read': '#FFA500',
-            'replied': '#28A745',
-            'archived': '#6C757D',
-        }
-        color = colors.get(obj.status, '#6C757D')
-        return format_html(
-            '<span style="background-color: {}; color: white; padding: 3px 10px; '
-            'border-radius: 3px; font-weight: bold;">{}</span>',
-            color,
-            obj.get_status_display()
-        )
-    status_badge.short_description = 'Status'
-    
-    def mark_read(self, request, queryset):
-        updated = queryset.update(status='read')
-        self.message_user(request, f"{updated} message(s) marked as read.")
-    mark_read.short_description = "Mark as Read"
-    
-    def mark_replied(self, request, queryset):
-        updated = queryset.update(status='replied')
-        self.message_user(request, f"{updated} message(s) marked as replied.")
-    mark_replied.short_description = "Mark as Replied"
-    
-    def archive(self, request, queryset):
-        updated = queryset.update(status='archived')
-        self.message_user(request, f"{updated} message(s) archived.")
-    archive.short_description = "Archive Messages"
+class RestaurantTableInline(admin.TabularInline):
+    model = RestaurantTable
+    extra = 0
 
 
-@admin.register(CateringRequest)
-class CateringRequestAdmin(admin.ModelAdmin):
-    list_display = [
-        'name', 'event_type', 'event_date', 'guest_count',
-        'status_badge', 'created_at'
-    ]
-    list_filter = ['status', 'event_type', 'event_date', 'created_at']
-    search_fields = ['name', 'email', 'phone', 'venue_address']
-    readonly_fields = ['created_at', 'updated_at']
-    date_hierarchy = 'event_date'
-    
-    fieldsets = (
-        ('Contact Information', {
-            'fields': ('name', 'email', 'phone')
-        }),
-        ('Event Details', {
-            'fields': ('event_type', 'event_date', 'guest_count', 'venue_address', 'message')
-        }),
-        ('Status & Budget', {
-            'fields': ('status', 'estimated_budget', 'notes')
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
-    
-    actions = ['mark_contacted', 'mark_quoted', 'mark_confirmed']
-    
-    def status_badge(self, obj):
-        """Display status with color badge"""
-        colors = {
-            'pending': '#FFA500',
-            'contacted': '#17A2B8',
-            'quoted': '#FFC107',
-            'confirmed': '#28A745',
-            'cancelled': '#DC3545',
-            'completed': '#6C757D',
-        }
-        color = colors.get(obj.status, '#6C757D')
-        return format_html(
-            '<span style="background-color: {}; color: white; padding: 3px 10px; '
-            'border-radius: 3px; font-weight: bold;">{}</span>',
-            color,
-            obj.get_status_display()
-        )
-    status_badge.short_description = 'Status'
-    
-    def mark_contacted(self, request, queryset):
-        updated = queryset.update(status='contacted')
-        self.message_user(request, f"{updated} request(s) marked as contacted.")
-    mark_contacted.short_description = "Mark as Contacted"
-    
-    def mark_quoted(self, request, queryset):
-        updated = queryset.update(status='quoted')
-        self.message_user(request, f"{updated} request(s) marked as quoted.")
-    mark_quoted.short_description = "Mark as Quoted"
-    
-    def mark_confirmed(self, request, queryset):
-        updated = queryset.update(status='confirmed')
-        self.message_user(request, f"{updated} request(s) marked as confirmed.")
-    mark_confirmed.short_description = "Mark as Confirmed"
+class BranchTimeSlotInline(admin.TabularInline):
+    model = BranchTimeSlot
+    extra = 0
+    fields = ['day_of_week', 'start_time', 'capacity', 'is_active', 'sort_order']
+    ordering = ['day_of_week', 'start_time']
 
 
 @admin.register(Branch)
 class BranchAdmin(admin.ModelAdmin):
-    list_display = ['name', 'phone', 'is_flagship', 'is_active', 'created_at']
-    list_filter = ['is_flagship', 'is_active', 'created_at']
-    search_fields = ['name', 'address', 'phone', 'email']
+    list_display = ['name', 'code', 'booking_enabled', 'online_capacity', 'deposit_policy', 'is_flagship', 'is_active']
+    list_filter = ['booking_enabled', 'deposit_policy', 'is_flagship', 'is_active']
+    search_fields = ['name', 'code', 'slug', 'address', 'phone']
     readonly_fields = ['created_at', 'updated_at']
-    
+    prepopulated_fields = {'slug': ('name',)}
+    inlines = [BranchTimeSlotInline, RestaurantTableInline]
     fieldsets = (
-        ('Basic Information', {
-            'fields': ('name', 'address', 'phone', 'email', 'hours')
-        }),
-        ('Settings', {
-            'fields': ('is_flagship', 'is_active')
-        }),
-        ('Additional Info', {
-            'fields': ('google_maps_url', 'description'),
-            'classes': ('collapse',)
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
+        ('Identity', {'fields': ('name', 'slug', 'code', 'description', 'is_flagship', 'is_active', 'sort_order')}),
+        ('Contact', {'fields': ('address', 'phone', 'email', 'hours', 'google_maps_url')}),
+        ('Booking rules', {'fields': ('booking_enabled', 'timezone', 'currency', 'booking_interval_minutes', 'default_booking_duration_minutes', 'min_advance_minutes', 'max_advance_days', 'max_online_party_size', 'online_capacity')}),
+        ('Payments', {'fields': ('accepted_payment_methods', 'deposit_policy', 'deposit_amount', 'stripe_account_id')}),
+        ('Timestamps', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
     )
+
+
+@admin.register(MenuDocument)
+class MenuDocumentAdmin(admin.ModelAdmin):
+    list_display = ['title', 'branch', 'version', 'effective_from', 'page_count', 'is_active', 'is_public', 'uploaded_at']
+    list_filter = ['branch', 'is_active', 'is_public', 'effective_from']
+    search_fields = ['title', 'version', 'original_filename', 'checksum_sha256']
+    readonly_fields = ['original_filename', 'file_size', 'checksum_sha256', 'uploaded_at', 'updated_at']
+
+
+class MenuItemOptionInline(admin.TabularInline):
+    model = MenuItemOption
+    extra = 0
+
+
+@admin.register(MenuCategory)
+class MenuCategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'slug', 'display_order', 'is_active']
+    list_editable = ['display_order', 'is_active']
+    prepopulated_fields = {'slug': ('name',)}
+
+
+@admin.register(MenuItem)
+class MenuItemAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'category', 'price', 'is_popular', 'is_chef_special', 'is_active', 'display_order']
+    list_filter = ['category', 'is_active', 'is_popular', 'is_chef_special', 'branches']
+    search_fields = ['code', 'name', 'description']
+    list_editable = ['price', 'is_active', 'display_order']
+    filter_horizontal = ['branches']
+    inlines = [MenuItemOptionInline]
+
+
+@admin.register(BranchTimeSlot)
+class BranchTimeSlotAdmin(admin.ModelAdmin):
+    list_display = ['branch', 'day_of_week', 'start_time', 'capacity', 'is_active']
+    list_filter = ['branch', 'day_of_week', 'is_active']
+    list_editable = ['capacity', 'is_active']
+    ordering = ['branch', 'day_of_week', 'start_time']
+
+
+@admin.register(RestaurantTable)
+class RestaurantTableAdmin(admin.ModelAdmin):
+    list_display = ['name', 'branch', 'area', 'min_capacity', 'max_capacity', 'is_active', 'sort_order']
+    list_filter = ['branch', 'area', 'is_active']
+    search_fields = ['name', 'branch__name', 'area']
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['reservation', 'payment_type', 'status', 'amount', 'currency', 'created_at', 'paid_at']
+    list_filter = ['provider', 'payment_type', 'status', 'currency']
+    search_fields = ['reservation__reference', 'reservation__name', 'external_payment_intent_id']
+    readonly_fields = ['idempotency_key', 'created_at', 'updated_at', 'paid_at']
+
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ['name', 'email', 'status', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['name', 'email', 'phone', 'message']
+    readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(CateringRequest)
+class CateringRequestAdmin(admin.ModelAdmin):
+    list_display = ['name', 'event_type', 'event_date', 'guest_count', 'status', 'created_at']
+    list_filter = ['status', 'event_type', 'event_date']
+    search_fields = ['name', 'email', 'phone', 'venue_address']
+    readonly_fields = ['created_at', 'updated_at']

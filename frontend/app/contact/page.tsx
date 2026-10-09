@@ -42,17 +42,17 @@ export default function ContactPage() {
   };
 
   return (
-    <main className="bg-[#f2eee5] text-[#171712] dark:bg-[#11110e] dark:text-white">
-      <section className="relative min-h-[72svh] overflow-hidden bg-[#0b0b09] text-white">
+    <main className="bg-[#f4ecdc] text-[#242b18] dark:bg-[#171c0f] dark:text-white">
+      <section className="relative min-h-[72svh] overflow-hidden bg-[#11170c] text-white">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1552566626-52f8b828add9?q=88&w=2200')] bg-cover bg-center" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,7,5,.96)_0%,rgba(7,7,5,.7)_50%,rgba(7,7,5,.2)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/25" />
         <div className="relative mx-auto flex min-h-[72svh] max-w-[1480px] items-end px-5 pb-16 pt-36 sm:px-8 lg:px-14 lg:pb-20">
           <div className="max-w-5xl">
-            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-6 text-xs font-semibold uppercase tracking-[0.3em] text-[#e7bd64]">Four doors · One warm welcome</motion.p>
+            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-6 text-xs font-semibold uppercase tracking-[0.3em] text-[#d8ad52]">Four doors · One warm welcome</motion.p>
             <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="font-serif text-[clamp(4rem,10vw,8.6rem)] font-medium leading-[0.83] tracking-[-0.055em]">
               Let&apos;s talk.
-              <span className="block italic text-[#e7bd64]">We&apos;re listening.</span>
+              <span className="block italic text-[#d8ad52]">We&apos;re listening.</span>
             </motion.h1>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-8 max-w-2xl border-t border-white/20 pt-6 text-base leading-relaxed text-white/70 md:text-lg">
               Questions, celebrations, group dining or feedback—send us a note or contact the location nearest you.
@@ -85,7 +85,7 @@ export default function ContactPage() {
           </FadeIn>
 
           <FadeIn direction="right">
-            <div className="border border-black/12 bg-[#faf8f2] p-6 shadow-[0_24px_80px_rgba(25,18,8,.08)] sm:p-9 dark:border-white/12 dark:bg-[#1b1b17]">
+            <div className="border border-black/12 bg-[#fffaf0] p-6 shadow-[0_24px_80px_rgba(25,18,8,.08)] sm:p-9 dark:border-white/12 dark:bg-[#222817]">
               <div className="mb-8 flex items-end justify-between gap-4">
                 <div><p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Send a message</p><h3 className="mt-2 font-serif text-3xl">How can we help?</h3></div>
                 <Send className="h-7 w-7 text-primary/45" />
@@ -99,7 +99,7 @@ export default function ContactPage() {
                 <Field label="Your message" id="message"><Textarea id="message" name="message" required value={formData.message} onChange={handleChange} placeholder="Tell us what you have in mind…" rows={6} className="resize-none rounded-none border-black/15 bg-transparent dark:border-white/15" /></Field>
                 {status === "success" && <p role="status" className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400"><CheckCircle2 className="h-4 w-4" /> Thanks—your message is on its way.</p>}
                 {status === "error" && <p role="alert" className="text-sm text-red-700 dark:text-red-400">We couldn&apos;t send that message. Please call us or try again.</p>}
-                <Button type="submit" disabled={status === "sending"} className="h-12 w-full rounded-full bg-[#171712] text-white hover:bg-primary dark:bg-primary dark:text-primary-foreground">
+                <Button type="submit" disabled={status === "sending"} className="h-12 w-full rounded-full bg-[#242b18] text-white hover:bg-primary dark:bg-primary dark:text-primary-foreground">
                   {status === "sending" ? "Sending…" : "Send message"}
                 </Button>
               </form>
@@ -108,24 +108,24 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="bg-[#171713] px-5 py-20 text-white sm:px-8 md:py-28 lg:px-14">
+      <section className="bg-[#202617] px-5 py-20 text-white sm:px-8 md:py-28 lg:px-14">
         <div className="mx-auto max-w-[1480px]">
           <FadeIn className="mb-12 max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#e7bd64]">Find your table</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8ad52]">Find your table</p>
             <h2 className="mt-4 font-serif text-4xl leading-none md:text-6xl">Khanz around Auckland.</h2>
           </FadeIn>
           <StaggerContainer className="grid gap-px bg-white/10 md:grid-cols-2">
             {branches.map((branch) => (
               <StaggerItem key={branch.name}>
-                <article className="group h-full bg-[#171713] p-7 transition hover:bg-[#1d1d18] sm:p-9">
+                <article className="group h-full bg-[#202617] p-7 transition hover:bg-[#2a321d] sm:p-9">
                   <div className="flex items-start justify-between gap-4">
-                    <div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#e7bd64]">{branch.area}</p><h3 className="mt-2 font-serif text-3xl">{branch.name}</h3></div>
-                    {branch.featured && <span className="rounded-full border border-[#e7bd64]/30 px-3 py-1 text-[0.65rem] uppercase tracking-[0.14em] text-[#e7bd64]">Flagship</span>}
+                    <div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#d8ad52]">{branch.area}</p><h3 className="mt-2 font-serif text-3xl">{branch.name}</h3></div>
+                    {branch.featured && <span className="rounded-full border border-[#d8ad52]/30 px-3 py-1 text-[0.65rem] uppercase tracking-[0.14em] text-[#d8ad52]">Flagship</span>}
                   </div>
                   <div className="mt-8 space-y-3 text-sm text-white/55">
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.address)}`} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 hover:text-white"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#e7bd64]" />{branch.address}</a>
-                    <a href={`tel:${branch.phone.replace(/\s/g, "")}`} className="flex items-center gap-3 hover:text-white"><Phone className="h-4 w-4 text-[#e7bd64]" />{branch.phone}</a>
-                    <p className="flex items-center gap-3"><Clock className="h-4 w-4 text-[#e7bd64]" />{branch.hours}</p>
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.address)}`} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 hover:text-white"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#d8ad52]" />{branch.address}</a>
+                    <a href={`tel:${branch.phone.replace(/\s/g, "")}`} className="flex items-center gap-3 hover:text-white"><Phone className="h-4 w-4 text-[#d8ad52]" />{branch.phone}</a>
+                    <p className="flex items-center gap-3"><Clock className="h-4 w-4 text-[#d8ad52]" />{branch.hours}</p>
                   </div>
                 </article>
               </StaggerItem>

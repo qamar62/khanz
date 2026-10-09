@@ -58,8 +58,8 @@ export default function GalleryPage() {
   }, [selectedImage, currentIndex]);
 
   return (
-    <main className="bg-[#f2eee5] text-[#171712] dark:bg-[#11110e] dark:text-white">
-      <section className="relative min-h-[82svh] overflow-hidden bg-[#0b0b09] text-white">
+    <main className="bg-[#f4ecdc] text-[#242b18] dark:bg-[#171c0f] dark:text-white">
+      <section className="relative min-h-[82svh] overflow-hidden bg-[#11170c] text-white">
         <div className="absolute inset-0 grid grid-cols-3">
           <div className="bg-[url('https://images.unsplash.com/photo-1601050690597-df0568f70950?q=88&w=1000')] bg-cover bg-center" />
           <div className="bg-[url('https://images.unsplash.com/photo-1552566626-52f8b828add9?q=88&w=1000')] bg-cover bg-center" />
@@ -69,10 +69,10 @@ export default function GalleryPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/35" />
         <div className="relative mx-auto flex min-h-[82svh] max-w-[1480px] items-end px-5 pb-16 pt-36 sm:px-8 lg:px-14 lg:pb-20">
           <div className="max-w-5xl">
-            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-6 text-xs font-semibold uppercase tracking-[0.3em] text-[#e7bd64]">Life at Khanz</motion.p>
+            <motion.p initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-6 text-xs font-semibold uppercase tracking-[0.3em] text-[#d8ad52]">Life at Khanz</motion.p>
             <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="font-serif text-[clamp(4rem,10vw,9rem)] font-medium leading-[0.82] tracking-[-0.055em]">
               Flavour. People.
-              <span className="block italic text-[#e7bd64]">Moments.</span>
+              <span className="block italic text-[#d8ad52]">Moments.</span>
             </motion.h1>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-8 max-w-2xl border-t border-white/20 pt-6 text-base leading-relaxed text-white/68 md:text-lg">A glimpse into the plates, places and celebrations that make our restaurants feel alive.</motion.p>
           </div>
@@ -85,7 +85,7 @@ export default function GalleryPage() {
             <div><p className="text-xs font-semibold uppercase tracking-[0.26em] text-primary">The collection</p><h2 className="mt-3 font-serif text-4xl md:text-5xl">Choose your view.</h2></div>
             <div className="flex max-w-full gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Gallery categories">
               {categories.map((category) => (
-                <button key={category.value} role="tab" aria-selected={activeCategory === category.value} onClick={() => { setActiveCategory(category.value); setSelectedImage(null); }} className={cn("whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition", activeCategory === category.value ? "bg-[#171712] text-white dark:bg-primary dark:text-primary-foreground" : "border border-black/12 text-black/55 hover:border-primary dark:border-white/12 dark:text-white/55")}>{category.label}</button>
+                <button key={category.value} role="tab" aria-selected={activeCategory === category.value} onClick={() => { setActiveCategory(category.value); setSelectedImage(null); }} className={cn("whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition", activeCategory === category.value ? "bg-[#242b18] text-white dark:bg-primary dark:text-primary-foreground" : "border border-black/12 text-black/55 hover:border-primary dark:border-white/12 dark:text-white/55")}>{category.label}</button>
               ))}
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function GalleryPage() {
                 <img src={image.src} alt={image.alt} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105 group-focus-visible:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-75 transition group-hover:opacity-100" />
                 <div className="absolute inset-x-0 bottom-0 flex translate-y-2 items-end justify-between gap-4 p-5 opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
-                  <div><span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-[#e7bd64]">{categories.find((category) => category.value === image.category)?.label}</span><p className="mt-1 text-sm text-white/80">{image.alt}</p></div>
+                  <div><span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-[#d8ad52]">{categories.find((category) => category.value === image.category)?.label}</span><p className="mt-1 text-sm text-white/80">{image.alt}</p></div>
                   <Maximize2 className="h-5 w-5 shrink-0 text-white" />
                 </div>
               </button>
@@ -124,7 +124,7 @@ export default function GalleryPage() {
             <button onClick={(event) => { event.stopPropagation(); navigate(1); }} className="absolute right-3 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white backdrop-blur hover:bg-white/10 md:right-7" aria-label="Next image"><ChevronRight className="h-6 w-6" /></button>
             <motion.figure key={selectedImage} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }} className="mx-auto max-w-6xl" onClick={(event) => event.stopPropagation()}>
               <img src={filteredImages.find((image) => image.id === selectedImage)?.src} alt={filteredImages.find((image) => image.id === selectedImage)?.alt} className="max-h-[78vh] w-auto max-w-full object-contain" />
-              <figcaption className="mt-5 flex items-center justify-between gap-5 text-sm text-white/60"><span>{filteredImages.find((image) => image.id === selectedImage)?.alt}</span><span className="shrink-0 font-serif text-xl text-[#e7bd64]">{currentIndex + 1} / {filteredImages.length}</span></figcaption>
+              <figcaption className="mt-5 flex items-center justify-between gap-5 text-sm text-white/60"><span>{filteredImages.find((image) => image.id === selectedImage)?.alt}</span><span className="shrink-0 font-serif text-xl text-[#d8ad52]">{currentIndex + 1} / {filteredImages.length}</span></figcaption>
             </motion.figure>
           </motion.div>
         )}

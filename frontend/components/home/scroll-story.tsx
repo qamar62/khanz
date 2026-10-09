@@ -41,7 +41,7 @@ export function ScrollStory() {
   });
 
   return (
-    <section ref={ref} className="relative h-[300vh] bg-[#11110e] text-white">
+    <section ref={ref} className="relative h-[300vh] bg-[#171c0f] text-white">
       <div className="sticky top-0 h-screen overflow-hidden">
         {chapters.map((chapter, index) => (
           <motion.div
@@ -58,7 +58,7 @@ export function ScrollStory() {
         <div className="relative z-10 mx-auto grid h-full max-w-[1480px] grid-cols-1 content-end px-5 pb-14 pt-28 sm:px-8 md:content-center lg:grid-cols-[1fr_0.72fr] lg:px-14">
           <div className="max-w-2xl">
             <div className="mb-8 flex items-center gap-4">
-              <span className="font-serif text-lg italic text-[#e7bd64]">{chapters[active].number}</span>
+              <span className="font-serif text-lg italic text-[#d8ad52]">{chapters[active].number}</span>
               <span className="h-px w-10 bg-white/25" />
               <span className="text-xs font-semibold uppercase tracking-[0.28em] text-white/55">{chapters[active].eyebrow}</span>
             </div>
@@ -89,7 +89,7 @@ export function ScrollStory() {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 z-20 h-1 bg-white/10">
-          <motion.div style={{ width: progress }} className="h-full bg-[#dca93f]" />
+          <motion.div style={{ width: progress }} className="h-full bg-[#c79532]" />
         </div>
       </div>
     </section>

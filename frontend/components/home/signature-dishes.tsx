@@ -23,7 +23,7 @@ const dishImages = [
 ];
 
   return (
-    <Section className="bg-[#f2eee5] text-[#171712] dark:bg-[#171713] dark:text-white">
+    <Section className="bg-[#f4ecdc] text-[#242b18] dark:bg-[#202617] dark:text-white">
       <Container>
         <FadeIn>
           <SectionHeader
@@ -37,7 +37,7 @@ const dishImages = [
           {signatureDishes.map((dish, index) => (
             <StaggerItem key={dish.id}>
               <ScaleOnHover>
-                <div className="group relative overflow-hidden border border-black/10 bg-[#faf8f2] transition-colors hover:border-primary/50 dark:border-white/10 dark:bg-[#1f1f1a]">
+                <div className="group relative overflow-hidden border border-black/10 bg-[#fffaf0] transition-colors hover:border-primary/50 dark:border-white/10 dark:bg-[#252d1a]">
                   {/* Image */}
                   <div className="aspect-[4/3] relative overflow-hidden">
                     <div 

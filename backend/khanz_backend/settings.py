@@ -117,7 +117,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
-    'DEFAULT_AUTHENTICATION_CLASSES': [],  # Disable session auth to avoid CSRF
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
     'DEFAULT_RENDERER_CLASSES': [
@@ -154,6 +157,21 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 GOOGLE_CALENDAR_CREDENTIALS_FILE = os.getenv('GOOGLE_CALENDAR_CREDENTIALS_FILE', 'credentials.json')
 GOOGLE_CALENDAR_TOKEN_FILE = os.getenv('GOOGLE_CALENDAR_TOKEN_FILE', 'token.json')
 GOOGLE_CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID', 'primary')
+GOOGLE_CALENDAR_ENABLED = os.getenv('GOOGLE_CALENDAR_ENABLED', 'False') == 'True'
+
+# Stripe payments. Secret values belong in environment variables only.
+# Placeholder values copied from .env.example ("..._replace_me") count as "not configured".
+def _stripe_env(name):
+    value = os.getenv(name, '').strip()
+    return '' if not value or 'replace_me' in value else value
+
+
+STRIPE_SECRET_KEY = _stripe_env('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = _stripe_env('STRIPE_PUBLISHABLE_KEY')
+STRIPE_WEBHOOK_SECRET = _stripe_env('STRIPE_WEBHOOK_SECRET')
+# How long an unpaid card booking holds its seats before they are released.
+PAYMENT_HOLD_MINUTES = int(os.getenv('PAYMENT_HOLD_MINUTES', '30'))
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000').rstrip('/')
 
 # Email settings
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')

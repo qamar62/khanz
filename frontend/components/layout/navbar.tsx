@@ -95,7 +95,7 @@ export function Navbar() {
                       ? "text-primary"
                       : isScrolled
                         ? "text-foreground/80 hover:text-primary"
-                        : "text-white/80 hover:text-[#e7bd64]"
+                        : "text-white/80 hover:text-[#d8ad52]"
                   )}
                 >
                   {link.label}
@@ -117,7 +117,7 @@ export function Navbar() {
                 href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
                 className={cn(
                   "hidden items-center gap-2 text-sm transition-colors xl:flex",
-                  isScrolled ? "text-foreground/80 hover:text-primary" : "text-white/75 hover:text-[#e7bd64]"
+                  isScrolled ? "text-foreground/80 hover:text-primary" : "text-white/75 hover:text-[#d8ad52]"
                 )}
               >
                 <Phone className="h-4 w-4 text-primary" />
