@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     
     # Local apps
     'reservations',
+    'orders',
 ]
 
 MIDDLEWARE = [
@@ -118,11 +119,15 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'orders.staff_auth.StaffTokenAuthentication',  # staff dashboard ("Authorization: Staff <token>")
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
+    'DEFAULT_THROTTLE_RATES': {
+        'staff_login': '10/min',
+    },
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
@@ -171,7 +176,15 @@ STRIPE_PUBLISHABLE_KEY = _stripe_env('STRIPE_PUBLISHABLE_KEY')
 STRIPE_WEBHOOK_SECRET = _stripe_env('STRIPE_WEBHOOK_SECRET')
 # How long an unpaid card booking holds its seats before they are released.
 PAYMENT_HOLD_MINUTES = int(os.getenv('PAYMENT_HOLD_MINUTES', '30'))
+# Card processing fee added on top of food totals at checkout (percent).
+CARD_FEE_PERCENT = os.getenv('CARD_FEE_PERCENT', '2.5')
+# Allow pickup orders with just a name and phone (no email code).
+GUEST_CHECKOUT_ENABLED = os.getenv('GUEST_CHECKOUT_ENABLED', 'True') == 'True'
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000').rstrip('/')
+
+# The branch admin page posts every weekly time slot inline (~140 slots x 8 fields),
+# which exceeds Django's default of 1000 form fields.
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
 # Email settings
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')

@@ -16,7 +16,8 @@ def generate_reservation_reference():
 
 
 def default_payment_methods():
-    return ['card', 'cash', 'cash_on_pickup', 'cash_on_delivery']
+    # Kept only because migration 0008 references it; branches no longer choose payment methods.
+    return ['card']
 
 
 def active_bookings(queryset):
@@ -66,16 +67,11 @@ class Reservation(models.Model):
         ('partially_refunded', 'Partially Refunded'),
         ('refunded', 'Refunded'),
         ('failed', 'Failed'),
-        ('pay_on_site', 'Pay on Site (cash)'),
     ]
 
     PAYMENT_METHOD_CHOICES = [
         ('card', 'Card (online deposit)'),
-        ('cash', 'Cash at restaurant'),
-        ('cash_on_pickup', 'Cash on pickup'),
-        ('cash_on_delivery', 'Cash on delivery'),
     ]
-    CASH_PAYMENT_METHODS = {'cash', 'cash_on_pickup', 'cash_on_delivery'}
     
     OCCASION_CHOICES = [
         ('none', 'None'),
@@ -157,7 +153,7 @@ class Reservation(models.Model):
     payment_method = models.CharField(
         max_length=20,
         choices=PAYMENT_METHOD_CHOICES,
-        default='cash',
+        default='card',
     )
     tables = models.ManyToManyField('RestaurantTable', related_name='reservations', blank=True)
     
@@ -330,14 +326,18 @@ class Branch(models.Model):
     max_advance_days = models.PositiveSmallIntegerField(default=30)
     max_online_party_size = models.PositiveSmallIntegerField(default=12)
     online_capacity = models.PositiveSmallIntegerField(default=60)
-    deposit_policy = models.CharField(max_length=20, choices=DEPOSIT_POLICY_CHOICES, default='none')
-    deposit_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    deposit_policy = models.CharField(
+        max_length=20, choices=DEPOSIT_POLICY_CHOICES, default='none',
+        help_text='Card deposit taken online via Stripe when booking. "No Deposit" = booking needs no payment.',
+    )
+    deposit_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        help_text='Amount per booking (Fixed) or per guest (Per Guest), in the branch currency.',
+    )
     stripe_account_id = models.CharField(max_length=255, blank=True)
-    accepted_payment_methods = models.JSONField(
-        default=default_payment_methods,
-        blank=True,
-        help_text='Any of: card, cash, cash_on_pickup, cash_on_delivery. '
-                  'Card also needs a deposit policy and Stripe keys.',
+    pickup_enabled = models.BooleanField(default=True, help_text='Accept online pickup orders for this branch.')
+    pickup_prep_minutes = models.PositiveSmallIntegerField(
+        default=25, help_text='Typical minutes until an ASAP pickup order is ready.',
     )
     sort_order = models.PositiveSmallIntegerField(default=0)
     
@@ -485,6 +485,10 @@ class MenuCategory(models.Model):
     description = models.TextField(blank=True)
     display_order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    suggest_at_checkout = models.BooleanField(
+        default=False,
+        help_text='Suggest items from this category in the cart as add-ons (e.g. breads, drinks).',
+    )
 
     class Meta:
         ordering = ['display_order', 'name']

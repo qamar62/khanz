@@ -50,12 +50,12 @@ class ReservationAdmin(admin.ModelAdmin):
     list_display = [
         'reference', 'name', 'branch_location', 'date', 'time', 'adult_guests',
         'child_guests', 'guests',
-        'status_badge', 'payment_method', 'payment_status', 'source', 'created_at',
+        'status_badge', 'payment_status', 'source', 'created_at',
     ]
-    list_filter = ['branch_location', 'status', 'payment_method', 'payment_status', 'source', 'date', 'occasion']
+    list_filter = ['branch_location', 'status', 'payment_status', 'source', 'date', 'occasion']
     search_fields = ['reference', 'name', 'email', 'phone', 'external_reference']
     readonly_fields = [
-        'reference', 'branch', 'google_calendar_event_id', 'arrival_time',
+        'preorder_summary', 'reference', 'branch', 'google_calendar_event_id', 'arrival_time',
         'seated_at', 'completed_at', 'cancelled_at', 'created_at', 'updated_at',
     ]
     filter_horizontal = ['tables']
@@ -66,11 +66,22 @@ class ReservationAdmin(admin.ModelAdmin):
         ('Booking', {'fields': ('reference', 'branch_location', 'date', 'time_slot', 'time', 'duration_minutes', 'adult_guests', 'child_guests', 'guests', 'tables')}),
         ('Guest', {'fields': ('name', 'email', 'phone', 'occasion', 'special_requests')}),
         ('Operations', {'fields': ('status', 'source', 'external_reference', 'internal_notes', 'confirmation_attempts')}),
-        ('Payment', {'fields': ('payment_method', 'deposit_required', 'deposit_amount', 'payment_status')}),
+        ('Payment', {'fields': ('payment_status', 'preorder_summary')}),
         ('Integrations', {'fields': ('branch', 'google_calendar_event_id'), 'classes': ('collapse',)}),
         ('Timeline', {'fields': ('arrival_time', 'seated_at', 'completed_at', 'cancelled_at', 'created_at', 'updated_at'), 'classes': ('collapse',)}),
     )
     actions = ['mark_confirmed', 'mark_table_ready', 'mark_seated', 'mark_completed', 'mark_no_show', 'mark_cancelled']
+
+    @admin.display(description='Pre-ordered food')
+    def preorder_summary(self, obj):
+        order = getattr(obj, 'preorder', None)
+        if not order:
+            return 'No pre-order'
+        items = ', '.join(f'{i.quantity} x {i.name}' for i in order.items.all())
+        return format_html(
+            '<a href="/admin/orders/order/{}/change/">{}</a> · {} {} ({}) · {}',
+            order.pk, order.reference, order.currency, order.total, order.get_payment_status_display(), items,
+        )
 
     @admin.display(description='Status', ordering='status')
     def status_badge(self, obj):
@@ -114,8 +125,8 @@ class BranchTimeSlotInline(admin.TabularInline):
 
 @admin.register(Branch)
 class BranchAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code', 'booking_enabled', 'online_capacity', 'deposit_policy', 'is_flagship', 'is_active']
-    list_filter = ['booking_enabled', 'deposit_policy', 'is_flagship', 'is_active']
+    list_display = ['name', 'code', 'booking_enabled', 'pickup_enabled', 'online_capacity', 'is_flagship', 'is_active']
+    list_filter = ['booking_enabled', 'pickup_enabled', 'is_flagship', 'is_active']
     search_fields = ['name', 'code', 'slug', 'address', 'phone']
     readonly_fields = ['created_at', 'updated_at']
     prepopulated_fields = {'slug': ('name',)}
@@ -124,7 +135,7 @@ class BranchAdmin(admin.ModelAdmin):
         ('Identity', {'fields': ('name', 'slug', 'code', 'description', 'is_flagship', 'is_active', 'sort_order')}),
         ('Contact', {'fields': ('address', 'phone', 'email', 'hours', 'google_maps_url')}),
         ('Booking rules', {'fields': ('booking_enabled', 'timezone', 'currency', 'booking_interval_minutes', 'default_booking_duration_minutes', 'min_advance_minutes', 'max_advance_days', 'max_online_party_size', 'online_capacity')}),
-        ('Payments', {'fields': ('accepted_payment_methods', 'deposit_policy', 'deposit_amount', 'stripe_account_id')}),
+        ('Online pickup orders', {'fields': ('pickup_enabled', 'pickup_prep_minutes')}),
         ('Timestamps', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
     )
 
@@ -144,8 +155,8 @@ class MenuItemOptionInline(admin.TabularInline):
 
 @admin.register(MenuCategory)
 class MenuCategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug', 'display_order', 'is_active']
-    list_editable = ['display_order', 'is_active']
+    list_display = ['name', 'slug', 'display_order', 'suggest_at_checkout', 'is_active']
+    list_editable = ['display_order', 'suggest_at_checkout', 'is_active']
     prepopulated_fields = {'slug': ('name',)}
 
 

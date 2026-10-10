@@ -4,10 +4,14 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { contactInfo } from "@/lib/data";
 
 export function FloatingCTA() {
   const [isVisible, setIsVisible] = useState(false);
+  const pathname = usePathname() ?? "";
+  // Keep ordering screens clear: the menu has its own "View order" bar, checkout has the pay button.
+  const hidden = ["/menu", "/checkout", "/reservation"].includes(pathname) || pathname.startsWith("/order/");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,7 +24,7 @@ export function FloatingCTA() {
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {isVisible && !hidden && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

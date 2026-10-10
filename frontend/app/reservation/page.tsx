@@ -4,18 +4,22 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, Banknote, CalendarDays, Check, CheckCircle2, Clock, CreditCard, Loader2,
-  MapPin, Minus, Plus, ShoppingBag, Truck, Users, Wallet, XCircle,
+  AlertTriangle, CalendarDays, Check, CheckCircle2, Clock, CreditCard, Loader2,
+  MapPin, Minus, Plus, Trash2, UtensilsCrossed, Users, Wallet, XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AvailabilitySlot, Branch, PaymentMethod, Reservation, ReservationLookup, branchAPI, reservationAPI } from "@/lib/api";
+import { AvailabilitySlot, Branch, Reservation, ReservationLookup, branchAPI, reservationAPI } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { CartLine, buildLine, lineUnitPrice, mergeLine, toOrderInput } from "@/contexts/cart-context";
+import { MenuPicker } from "@/components/order/menu-picker";
+import { CARD_FEE_PERCENT, cardFee, formatMoney } from "@/lib/money";
+import { bestPromotion, useLivePromotions } from "@/lib/promotions";
+import type { MenuItem } from "@/lib/api";
 
-const ALL_METHODS: PaymentMethod[] = ["card", "cash", "cash_on_pickup", "cash_on_delivery"];
-const fallbackDefaults = { phone: "", email: "", hours: "", is_active: true, booking_enabled: true, currency: "NZD", booking_interval_minutes: 30, default_booking_duration_minutes: 90, min_advance_minutes: 120, max_advance_days: 30, max_online_party_size: 12, deposit_policy: "none" as const, deposit_amount: "0.00", accepted_payment_methods: ALL_METHODS, online_payments_enabled: false };
+const fallbackDefaults = { phone: "", email: "", hours: "", is_active: true, booking_enabled: true, currency: "NZD", booking_interval_minutes: 30, default_booking_duration_minutes: 90, min_advance_minutes: 120, max_advance_days: 30, max_online_party_size: 12, deposit_policy: "none" as const, deposit_amount: "0.00", online_payments_enabled: false };
 const fallbackBranches: Branch[] = [
   { ...fallbackDefaults, id: 1, slug: "khanz-mediterranean", code: "MEDIT_PAP", name: "Khanz Mediterranean", address: "135 Great South Road, Papatoetoe", is_flagship: true, online_capacity: 80, sort_order: 1 },
   { ...fallbackDefaults, id: 2, slug: "khanz-botany", code: "BOTANY", name: "Khanz Restaurant Botany", address: "302 Te Irirangi Drive, Flat Bush", is_flagship: false, online_capacity: 80, sort_order: 2 },
@@ -29,13 +33,6 @@ const occasions = [
   { label: "Celebration", value: "celebration" },
   { label: "Other", value: "other" },
 ];
-const paymentOptions: { value: PaymentMethod; title: string; description: string; icon: React.ElementType }[] = [
-  { value: "card", title: "Card", description: "Pay the deposit now via secure Stripe checkout.", icon: CreditCard },
-  { value: "cash", title: "Cash", description: "Pay in cash at the restaurant on the day.", icon: Banknote },
-  { value: "cash_on_pickup", title: "Cash on pickup", description: "Pay in cash when you collect.", icon: ShoppingBag },
-  { value: "cash_on_delivery", title: "Cash on delivery", description: "Pay in cash when your order arrives.", icon: Truck },
-];
-const paymentLabel = (method?: string) => paymentOptions.find((option) => option.value === method)?.title ?? "Cash";
 
 const PENDING_KEY = "khanz:pending-payment";
 type PendingPayment = { id: number; email: string; reference: string; branchName: string; when: string; party: string };
@@ -50,7 +47,8 @@ export default function ReservationPage() {
   const [step, setStep] = useState(1);
   const [branches, setBranches] = useState<Branch[]>(fallbackBranches);
   const [formData, setFormData] = useState(emptyForm);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
+  const [preorder, setPreorder] = useState<CartLine[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   // Availability: fetched once per restaurant + date; party size is applied client-side, so typing
   // guest counts or picking a time never re-requests or blanks the grid.
@@ -115,10 +113,6 @@ export default function ReservationPage() {
     if (slotsReady && formData.slotId && !selectedSlot) setFormData((current) => ({ ...current, time: "", slotId: "" }));
   }, [slotsReady, formData.slotId, selectedSlot]);
 
-  // Keep the chosen payment option valid for the chosen restaurant.
-  const acceptedMethods = selectedBranch?.accepted_payment_methods?.length ? selectedBranch.accepted_payment_methods : ALL_METHODS;
-  useEffect(() => { if (paymentMethod && !acceptedMethods.includes(paymentMethod)) setPaymentMethod(""); }, [acceptedMethods, paymentMethod]);
-
   const maxRemaining = visibleSlots.length ? Math.max(...visibleSlots.map((slot) => slot.remaining_capacity)) : null;
   const capacityNotice = useMemo(() => {
     if (!selectedBranch || totalGuests < 1) return null;
@@ -136,24 +130,25 @@ export default function ReservationPage() {
     return null;
   }, [selectedBranch, totalGuests, maxParty, selectedSlot, slotsReady, maxRemaining, selectedDate]);
 
-  const depositPreview = useMemo(() => {
-    if (!selectedBranch) return 0;
-    const amount = Number(selectedBranch.deposit_amount) || 0;
-    if (selectedBranch.deposit_policy === "fixed") return amount;
-    if (selectedBranch.deposit_policy === "per_guest") return amount * totalGuests;
-    return 0;
-  }, [selectedBranch, totalGuests]);
-  const cardUnavailableReason = !selectedBranch?.online_payments_enabled
-    ? "Online card payments are coming soon."
-    : depositPreview <= 0 ? "Card deposits aren't taken online at this restaurant." : null;
+  // Optional pre-ordered food: paid by card (food + card fee). No food = free booking.
+  const currency = selectedBranch?.currency ?? "NZD";
+  const feePercent = Number(selectedBranch?.card_fee_percent ?? CARD_FEE_PERCENT);
+  const preorderSubtotal = Math.round(preorder.reduce((sum, line) => sum + lineUnitPrice(line) * line.quantity, 0) * 100) / 100;
+  const livePromotions = useLivePromotions("checkout");
+  const { promotion: preorderPromotion, discount: preorderDiscount } = bestPromotion(preorderSubtotal, livePromotions, "preorder");
+  const preorderFee = cardFee(preorderSubtotal - preorderDiscount, feePercent);
+  const preorderTotal = Math.round((preorderSubtotal - preorderDiscount + preorderFee) * 100) / 100;
+  const preorderCounts = useMemo(() => preorder.reduce<Record<number, number>>((acc, line) => ({ ...acc, [line.menuItemId]: (acc[line.menuItemId] ?? 0) + line.quantity }), {}), [preorder]);
+  const addPreorder = (item: MenuItem, optionIds: number[], quantity: number, notes: string) => setPreorder((current) => mergeLine(current, buildLine(item, optionIds, quantity, notes)));
+  const setPreorderQuantity = (key: string, quantity: number) => setPreorder((current) => (quantity <= 0 ? current.filter((line) => line.key !== key) : current.map((line) => (line.key === key ? { ...line, quantity } : line))));
+  const cardUnavailable = preorder.length > 0 && !selectedBranch?.online_payments_enabled;
 
   const update = (field: keyof typeof emptyForm, value: string) => { setFormData((current) => ({ ...current, [field]: value })); if (status === "error") setStatus("idle"); };
   const chooseBranch = (slug: string) => setFormData((current) => (current.branch === slug ? current : { ...current, branch: slug, time: "", slotId: "" }));
   const chooseDate = (value: string) => setFormData((current) => (current.date === value ? current : { ...current, date: value, time: "", slotId: "" }));
 
   const canContinue = Boolean(formData.branch && formData.date && selectedSlot && adults >= 1 && !capacityNotice);
-  const paymentValid = paymentMethod !== "" && !(paymentMethod === "card" && cardUnavailableReason);
-  const canSubmit = Boolean(canContinue && formData.name && formData.email && formData.phone && paymentValid);
+  const canSubmit = Boolean(canContinue && formData.name && formData.email && formData.phone && !cardUnavailable);
   const whenLabel = `${selectedDate?.label ?? formData.date} · ${formData.time}`;
   const partyLabel = `${adults} ${adults === 1 ? "adult" : "adults"} · ${children} ${children === 1 ? "child" : "children"}`;
 
@@ -167,13 +162,14 @@ export default function ReservationPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!canSubmit || !paymentMethod) return;
+    if (!canSubmit) return;
     setStatus("sending"); setErrorMessage("");
     const response = await reservationAPI.create({
       name: formData.name, email: formData.email, phone: formData.phone, date: formData.date,
       time_slot_id: Number(formData.slotId), adult_guests: adults, child_guests: children,
       occasion: formData.occasion, special_requests: formData.specialRequests,
-      branch_slug: formData.branch, payment_method: paymentMethod, source: "web",
+      branch_slug: formData.branch, payment_method: "card", source: "web",
+      preorder_items: preorder.length ? toOrderInput(preorder) : undefined,
     });
     if (!response.data) {
       setStatus("error");
@@ -182,7 +178,7 @@ export default function ReservationPage() {
       return;
     }
     setReservation(response.data);
-    if (response.data.payment_method === "card" && response.data.deposit_required) {
+    if (response.data.preorder && response.data.preorder.payment_status !== "paid") {
       savePending({ id: response.data.id, email: formData.email, reference: response.data.reference, branchName: selectedBranch?.name ?? formData.branch, when: whenLabel, party: partyLabel });
       setStatus("redirecting");
       const redirected = await openCheckout(response.data.id, formData.email);
@@ -195,7 +191,7 @@ export default function ReservationPage() {
   if (paymentReturn) return <PaymentReturn result={paymentReturn.result} reference={paymentReturn.reference} onRetry={openCheckout} paymentState={paymentState} paymentMessage={paymentMessage} />;
 
   if (status === "success" && reservation) {
-    const cardPending = reservation.payment_method === "card" && reservation.deposit_required;
+    const cardPending = Boolean(reservation.preorder && reservation.preorder.payment_status !== "paid");
     return (
       <ResultShell>
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#c79532] text-[#17200f]"><CheckCircle2 className="h-8 w-8" /></div>
@@ -203,19 +199,19 @@ export default function ReservationPage() {
         <h1 className="mt-3 font-serif text-4xl sm:text-6xl">{cardPending ? "Almost there." : "Your table is booked."}</h1>
         <p className="mx-auto mt-5 max-w-xl text-white/60">
           {cardPending
-            ? `Thanks, ${formData.name}. Your seats are held while you pay the deposit.`
-            : `Thanks, ${formData.name}. We've sent the details to ${formData.email}. ${cashCopy(reservation.payment_method)}`}
+            ? `Thanks, ${formData.name}. Your table is held while you pay for your pre-order.`
+            : `Thanks, ${formData.name}. We've sent the details to ${formData.email}.`}
         </p>
         <div className="mx-auto mt-9 grid max-w-2xl gap-px bg-white/10 text-left sm:grid-cols-2">
           <SummaryItem icon={MapPin} label="Restaurant" value={selectedBranch?.name ?? formData.branch} />
           <SummaryItem icon={CalendarDays} label="When" value={whenLabel} />
           <SummaryItem icon={Users} label="Party" value={partyLabel} />
-          <SummaryItem icon={Wallet} label="Payment" value={paymentLabel(reservation.payment_method)} />
+          <SummaryItem icon={Wallet} label="Pre-ordered food" value={reservation.preorder ? `${formatMoney(reservation.preorder.total, reservation.preorder.currency)} by card` : "None — pay at the restaurant"} />
         </div>
         {cardPending ? (
           <div className="mx-auto mt-7 max-w-2xl border border-[#d8ad52]/35 bg-[#d8ad52]/8 p-5 text-left">
-            <div className="flex gap-3"><CreditCard className="mt-0.5 h-5 w-5 text-[#d8ad52]" /><div><strong>Deposit: {reservation.branch_details?.currency ?? "NZD"} ${reservation.deposit_amount}</strong><p className="mt-1 text-sm text-white/55">Secure checkout opens on Stripe. No card details pass through Khanz servers.</p></div></div>
-            <Button onClick={() => openCheckout(reservation.id, formData.email)} disabled={paymentState === "loading"} className="mt-5 h-12 w-full rounded-full bg-[#c79532] text-[#17200f] hover:bg-[#dfb85e]">{paymentState === "loading" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Opening secure checkout…</> : "Pay deposit securely"}</Button>
+            <div className="flex gap-3"><CreditCard className="mt-0.5 h-5 w-5 text-[#d8ad52]" /><div><strong>Pre-order total: {formatMoney(reservation.preorder?.total ?? 0, reservation.preorder?.currency)}</strong><p className="mt-1 text-sm text-white/55">Secure checkout opens on Stripe. No card details pass through Khanz servers.</p></div></div>
+            <Button onClick={() => openCheckout(reservation.id, formData.email)} disabled={paymentState === "loading"} className="mt-5 h-12 w-full rounded-full bg-[#c79532] text-[#17200f] hover:bg-[#dfb85e]">{paymentState === "loading" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Opening secure checkout…</> : "Pay securely by card"}</Button>
             {paymentMessage ? <p className="mt-3 text-sm text-amber-200">{paymentMessage}</p> : null}
           </div>
         ) : null}
@@ -230,8 +226,8 @@ export default function ReservationPage() {
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=88&w=2200')] bg-cover bg-center" /><div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,20,9,.97)_0%,rgba(15,20,9,.88)_48%,rgba(15,20,9,.58)_100%)]" /><div className="absolute inset-0 bg-gradient-to-t from-[#171c0f] via-transparent to-black/35" />
         <div className="relative mx-auto grid max-w-[1480px] gap-12 lg:grid-cols-[0.68fr_1fr] lg:items-start lg:gap-16">
           <motion.div initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} className="lg:sticky lg:top-36">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#d8ad52]">Reservations</p><h1 className="mt-5 font-serif text-[clamp(3.8rem,7vw,7rem)] font-medium leading-[0.86] tracking-[-0.05em]">A table is<br /><span className="italic text-[#d8ad52]">waiting.</span></h1><p className="mt-7 max-w-lg text-base leading-relaxed text-white/60 md:text-lg">Live availability, branch-aware capacity and secure deposits—all in one simple booking.</p>
-            <div className="mt-10 hidden border-t border-white/15 pt-7 lg:block"><p className="text-xs uppercase tracking-[0.2em] text-white/35">Your booking</p><div className="mt-5 space-y-4 text-sm"><BookingLine icon={MapPin} text={selectedBranch?.name ?? "Choose a restaurant"} active={Boolean(selectedBranch)} /><BookingLine icon={CalendarDays} text={selectedDate?.label ?? "Choose a date"} active={Boolean(selectedDate)} /><BookingLine icon={Clock} text={formData.time || "Choose a time"} active={Boolean(formData.time)} /><BookingLine icon={Users} text={partyLabel} active={totalGuests > 0} /><BookingLine icon={Wallet} text={paymentMethod ? paymentLabel(paymentMethod) : "Choose how to pay"} active={Boolean(paymentMethod)} /></div></div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#d8ad52]">Reservations</p><h1 className="mt-5 font-serif text-[clamp(3.8rem,7vw,7rem)] font-medium leading-[0.86] tracking-[-0.05em]">A table is<br /><span className="italic text-[#d8ad52]">waiting.</span></h1><p className="mt-7 max-w-lg text-base leading-relaxed text-white/60 md:text-lg">Live availability, free booking, and the option to pre-order your food so it's ready when you arrive.</p>
+            <div className="mt-10 hidden border-t border-white/15 pt-7 lg:block"><p className="text-xs uppercase tracking-[0.2em] text-white/35">Your booking</p><div className="mt-5 space-y-4 text-sm"><BookingLine icon={MapPin} text={selectedBranch?.name ?? "Choose a restaurant"} active={Boolean(selectedBranch)} /><BookingLine icon={CalendarDays} text={selectedDate?.label ?? "Choose a date"} active={Boolean(selectedDate)} /><BookingLine icon={Clock} text={formData.time || "Choose a time"} active={Boolean(formData.time)} /><BookingLine icon={Users} text={partyLabel} active={totalGuests > 0} /><BookingLine icon={Wallet} text={preorder.length ? `Pre-order · ${formatMoney(preorderTotal, currency)}` : "No pre-order · free booking"} active={preorder.length > 0} /></div></div>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="border border-white/12 bg-[#f7efdf] text-[#242b18] shadow-[0_30px_100px_rgba(0,0,0,.25)] dark:bg-[#222817] dark:text-white">
@@ -305,45 +301,60 @@ export default function ReservationPage() {
                 <div className="mt-5"><Field label="Occasion (optional)"><Select value={formData.occasion} onValueChange={(value) => update("occasion", value)}><SelectTrigger className="h-12 w-full rounded-none border-black/15 bg-transparent dark:border-white/15"><SelectValue placeholder="What are we celebrating?" /></SelectTrigger><SelectContent>{occasions.map((occasion) => <SelectItem key={occasion.value} value={occasion.value}>{occasion.label}</SelectItem>)}</SelectContent></Select></Field></div>
                 <div className="mt-5"><Field label="Special requests (optional)"><Textarea value={formData.specialRequests} onChange={(event) => update("specialRequests", event.target.value)} placeholder="Allergies, accessibility needs or anything else we should know…" rows={4} className="resize-none rounded-none border-black/15 bg-transparent dark:border-white/15" /></Field></div>
 
-                <fieldset className="mt-7">
-                  <legend className="mb-3 text-sm font-semibold">How would you like to pay?</legend>
-                  <div role="radiogroup" className="grid gap-3 sm:grid-cols-2">
-                    {paymentOptions.filter((option) => acceptedMethods.includes(option.value)).map((option) => {
-                      const disabledReason = option.value === "card" ? cardUnavailableReason : null;
-                      const selected = paymentMethod === option.value;
-                      const Icon = option.icon;
-                      return (
-                        <button key={option.value} type="button" role="radio" aria-checked={selected} disabled={Boolean(disabledReason)} onClick={() => setPaymentMethod(option.value)}
-                          className={cn("relative flex gap-3 border p-4 text-left transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-45", selected ? "border-primary bg-primary/8 ring-1 ring-primary" : "border-black/12 hover:border-primary/50 dark:border-white/12")}>
-                          <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", selected ? "text-primary" : "text-black/35 dark:text-white/35")} />
-                          <span className="min-w-0">
-                            <strong className="block text-sm">{option.title}{option.value === "card" && !disabledReason ? ` · ${selectedBranch?.currency ?? "NZD"} $${depositPreview.toFixed(2)} deposit` : ""}</strong>
-                            <span className="mt-1 block text-xs text-black/50 dark:text-white/50">{disabledReason ?? option.description}</span>
-                          </span>
-                          {selected ? <Check className="absolute right-3 top-3 h-4 w-4 text-primary" /> : null}
-                        </button>
-                      );
-                    })}
+                <div className="mt-7 border border-black/10 p-4 dark:border-white/10">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex gap-3">
+                      <UtensilsCrossed className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                      <div className="text-sm">
+                        <strong className="block">Pre-order food (optional)</strong>
+                        <span className="mt-0.5 block text-xs text-black/50 dark:text-white/50">Choose dishes now and they&apos;ll be ready when you arrive. Skip this to book for free and order at the table.</span>
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => setPickerOpen(true)} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-primary px-4 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"><Plus className="h-3.5 w-3.5" /> {preorder.length ? "Add more" : "Add dishes"}</button>
                   </div>
-                </fieldset>
+                  <AnimatePresence initial={false}>
+                    {preorder.length ? (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                        <ul className="mt-4 divide-y divide-black/10 text-sm dark:divide-white/10">
+                          {preorder.map((line) => (
+                            <li key={line.key} className="flex items-center justify-between gap-3 py-2.5">
+                              <div className="min-w-0"><p className="font-medium">{line.name}</p>{line.options.length ? <p className="text-xs text-black/50 dark:text-white/50">{line.options.map((option) => option.name).join(", ")}</p> : null}</div>
+                              <div className="flex shrink-0 items-center gap-3">
+                                <div className="flex h-8 items-stretch border border-black/15 dark:border-white/15">
+                                  <button type="button" aria-label={`Fewer ${line.name}`} onClick={() => setPreorderQuantity(line.key, line.quantity - 1)} className="flex w-8 items-center justify-center">{line.quantity === 1 ? <Trash2 className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}</button>
+                                  <span className="flex w-8 items-center justify-center border-x border-black/10 text-xs font-semibold dark:border-white/10">{line.quantity}</span>
+                                  <button type="button" aria-label={`More ${line.name}`} onClick={() => setPreorderQuantity(line.key, Math.min(50, line.quantity + 1))} className="flex w-8 items-center justify-center"><Plus className="h-3.5 w-3.5" /></button>
+                                </div>
+                                <span className="w-16 text-right tabular-nums">{formatMoney(lineUnitPrice(line) * line.quantity, currency)}</span>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="mt-2 space-y-1 border-t border-black/10 pt-3 text-sm dark:border-white/10">
+                          <div className="flex justify-between"><span>Food subtotal</span><span className="tabular-nums">{formatMoney(preorderSubtotal, currency)}</span></div>
+                          {preorderPromotion ? <div className="flex justify-between font-medium text-emerald-700 dark:text-emerald-400"><span>{preorderPromotion.badge || "Promotion"} · {preorderPromotion.title}</span><span className="tabular-nums">−{formatMoney(preorderDiscount, currency)}</span></div> : null}
+                          <div className="flex justify-between text-black/55 dark:text-white/55"><span>Card fee ({feePercent}%)</span><span className="tabular-nums">{formatMoney(preorderFee, currency)}</span></div>
+                          <div className="flex justify-between pt-1 font-semibold"><span>Pay now by card</span><span className="tabular-nums">{formatMoney(preorderTotal, currency)}</span></div>
+                        </div>
+                        {cardUnavailable ? <p className="mt-3 text-xs text-amber-800 dark:text-amber-200">Online payment is unavailable right now. Remove the dishes to book for free, or call {selectedBranch?.phone || "the restaurant"}.</p> : null}
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+                </div>
 
-                <div className="mt-7 border border-black/10 bg-black/[.025] p-4 text-sm dark:border-white/10 dark:bg-white/[.025]"><strong>{selectedBranch?.name}</strong><p className="mt-1 text-black/50 dark:text-white/50">{whenLabel} · {partyLabel}{paymentMethod ? ` · ${paymentLabel(paymentMethod)}` : ""}</p></div>
+                <div className="mt-7 border border-black/10 bg-black/[.025] p-4 text-sm dark:border-white/10 dark:bg-white/[.025]"><strong>{selectedBranch?.name}</strong><p className="mt-1 text-black/50 dark:text-white/50">{whenLabel} · {partyLabel}</p></div>
                 <AnimatePresence>{status === "error" ? <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} role="alert" className="mt-4 text-sm text-red-700 dark:text-red-400">{errorMessage || "We couldn't complete that request."} If your time just filled, go back and pick another.</motion.p> : null}</AnimatePresence>
-                <div className="mt-7 flex gap-3"><Button type="button" variant="outline" onClick={() => setStep(1)} className="h-12 flex-1 rounded-full border-black/20 dark:border-white/20">Back</Button><Button type="submit" disabled={!canSubmit || status === "sending" || status === "redirecting"} className="h-12 flex-[1.6] rounded-full bg-[#242b18] text-white hover:bg-primary hover:text-[#17200f] dark:bg-primary dark:text-primary-foreground">{status === "sending" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Reserving…</> : status === "redirecting" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Opening secure checkout…</> : paymentMethod === "card" ? "Reserve & pay deposit" : "Confirm reservation"}</Button></div>
-                <p className="mt-4 text-center text-xs text-black/40 dark:text-white/40">{paymentMethod ? "" : "Choose a payment option to continue. "}Adults and children both count toward the restaurant&apos;s live capacity.</p>
+                <div className="mt-7 flex gap-3"><Button type="button" variant="outline" onClick={() => setStep(1)} className="h-12 flex-1 rounded-full border-black/20 dark:border-white/20">Back</Button><Button type="submit" disabled={!canSubmit || status === "sending" || status === "redirecting"} className="h-12 flex-[1.6] rounded-full bg-[#242b18] text-white hover:bg-primary hover:text-[#17200f] dark:bg-primary dark:text-primary-foreground">{status === "sending" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Reserving…</> : status === "redirecting" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Opening secure checkout…</> : preorder.length ? `Reserve & pay ${formatMoney(preorderTotal, currency)}` : "Confirm reservation"}</Button></div>
+                <p className="mt-4 text-center text-xs text-black/40 dark:text-white/40">Adults and children both count toward the restaurant&apos;s live capacity.</p>
               </motion.div>
             )}</AnimatePresence></form>
           </motion.div>
         </div>
       </section>
+      <MenuPicker open={pickerOpen} onOpenChange={setPickerOpen} onAdd={addPreorder} counts={preorderCounts}
+        summary={<div className="flex justify-between text-sm"><span>{preorder.reduce((sum, line) => sum + line.quantity, 0)} dishes · card fee {feePercent}% added</span><span className="font-semibold tabular-nums">{formatMoney(preorderSubtotal, currency)}</span></div>} />
     </main>
   );
-}
-
-function cashCopy(method?: string) {
-  if (method === "cash_on_pickup") return "Please have cash ready when you collect.";
-  if (method === "cash_on_delivery") return "Please have cash ready on delivery.";
-  return "You'll pay in cash at the restaurant.";
 }
 
 function PaymentReturn({ result, reference, onRetry, paymentState, paymentMessage }: { result: "success" | "cancelled"; reference: string; onRetry: (id: number, email: string) => Promise<boolean>; paymentState: string; paymentMessage: string }) {
@@ -357,7 +368,7 @@ function PaymentReturn({ result, reference, onRetry, paymentState, paymentMessag
     if (!match) return;
     let attempts = 0; let cancelled = false;
     const check = async () => {
-      const response = await reservationAPI.lookup(match.reference, match.email);
+      const response = await reservationAPI.lookup(match.reference, match.email, result === "success");
       if (cancelled) return;
       if (response.data) setLookup(response.data);
       // Stripe's webhook can land a moment after the redirect: poll briefly until it is marked paid.
@@ -374,15 +385,15 @@ function PaymentReturn({ result, reference, onRetry, paymentState, paymentMessag
     <ResultShell>
       <div className={cn("mx-auto flex h-16 w-16 items-center justify-center rounded-full", success ? "bg-[#c79532] text-[#17200f]" : "bg-white/10 text-amber-200")}>{success ? <CheckCircle2 className="h-8 w-8" /> : <XCircle className="h-8 w-8" />}</div>
       <p className="mt-7 text-xs font-semibold uppercase tracking-[0.28em] text-[#d8ad52]">Reservation {reference}</p>
-      <h1 className="mt-3 font-serif text-4xl sm:text-6xl">{success ? "Deposit received." : expired ? "This hold has expired." : "Payment not completed."}</h1>
+      <h1 className="mt-3 font-serif text-4xl sm:text-6xl">{success ? "Payment received." : expired ? "This hold has expired." : "Payment not completed."}</h1>
       <p className="mx-auto mt-5 max-w-xl text-white/60">
         {success
           ? paid ? "Your table is confirmed and a confirmation email is on its way." : "Thanks — we're confirming your payment with Stripe. Your confirmation email will follow shortly."
-          : expired ? "The seats were released because the deposit wasn't paid in time. Please make a new booking." : "No money was taken. Your seats are held for 30 minutes so you can try again."}
+          : expired ? "The table was released because the pre-order wasn't paid in time. Please make a new booking." : "No money was taken. Your seats are held for 30 minutes so you can try again."}
       </p>
       {pending ? (
         <div className="mx-auto mt-9 grid max-w-2xl gap-px bg-white/10 text-left sm:grid-cols-2">
-          <SummaryItem icon={MapPin} label="Restaurant" value={pending.branchName} /><SummaryItem icon={CalendarDays} label="When" value={pending.when} /><SummaryItem icon={Users} label="Party" value={pending.party} /><SummaryItem icon={Wallet} label="Status" value={paid ? "Confirmed · deposit paid" : expired ? "Released" : success ? "Confirming payment…" : "Awaiting deposit"} />
+          <SummaryItem icon={MapPin} label="Restaurant" value={pending.branchName} /><SummaryItem icon={CalendarDays} label="When" value={pending.when} /><SummaryItem icon={Users} label="Party" value={pending.party} /><SummaryItem icon={Wallet} label="Status" value={paid ? "Confirmed · pre-order paid" : expired ? "Released" : success ? "Confirming payment…" : "Awaiting payment"} />
         </div>
       ) : null}
       {!success && !expired && pending ? (

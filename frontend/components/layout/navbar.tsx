@@ -8,12 +8,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CartButton } from "@/components/order/cart-drawer";
 import { cn } from "@/lib/utils";
 import { contactInfo } from "@/lib/data";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/menu", label: "Menu" },
+  { href: "/menu", label: "Menu & Order" },
   { href: "/about", label: "About" },
   { href: "/gallery", label: "Gallery" },
   { href: "/contact", label: "Contact" },
@@ -125,6 +126,7 @@ export function Navbar() {
               </Link>
               <span className="hidden h-5 w-px bg-border xl:block" />
               <ThemeToggle />
+              <CartButton className={isScrolled ? "text-foreground" : "text-white"} />
               <Button
                 asChild
                 className="whitespace-nowrap bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-0.5"
@@ -136,6 +138,7 @@ export function Navbar() {
             {/* Mobile Menu Button & Theme Toggle */}
             <div className="lg:hidden flex items-center gap-2">
               <ThemeToggle />
+              <CartButton className={isScrolled || isMobileMenuOpen ? "text-foreground" : "text-white"} />
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="relative z-10 p-2"

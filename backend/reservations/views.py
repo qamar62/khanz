@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -82,7 +82,20 @@ class ReservationViewSet(PublicCreateStaffManageMixin, viewsets.ModelViewSet):
     public_actions = {'create', 'availability', 'payment_intent', 'checkout_session', 'lookup'}
 
     def get_queryset(self):
-        return Reservation.objects.select_related('branch_location').prefetch_related('tables', 'payments')
+        queryset = Reservation.objects.select_related('branch_location').prefetch_related('tables', 'payments')
+        if self.action == 'list':  # staff dashboard filters
+            params = self.request.query_params
+            if params.get('date'):
+                queryset = queryset.filter(date=params['date'])
+            if params.get('branch') and params['branch'] != 'all':
+                queryset = queryset.filter(branch_location__slug=params['branch'])
+            if params.get('status') and params['status'] != 'all':
+                queryset = queryset.filter(status=params['status'])
+            if params.get('q'):
+                q = params['q']
+                queryset = queryset.filter(Q(name__icontains=q) | Q(reference__icontains=q) | Q(phone__icontains=q) | Q(email__icontains=q))
+            queryset = queryset.order_by('date', 'time')
+        return queryset
 
     def perform_create(self, serializer):
         reservation = serializer.save()
@@ -279,64 +292,28 @@ class ReservationViewSet(PublicCreateStaffManageMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='checkout-session')
     def checkout_session(self, request, pk=None):
+        """Pay for the reservation's pre-ordered food (food total + card fee) on Stripe Checkout."""
+        from orders.services import CheckoutUnavailable, checkout_url
+
         reservation = self.get_object()
         if request.data.get('email', '').strip().lower() != reservation.email.strip().lower():
             return Response({'detail': 'Reservation details do not match.'}, status=403)
-        if not reservation.deposit_required or reservation.deposit_amount <= 0:
-            return Response({'detail': 'No deposit is required for this reservation.'}, status=400)
-        if reservation.payment_status == 'paid':
-            return Response({'detail': 'This deposit has already been paid.'}, status=400)
+        order = getattr(reservation, 'preorder', None)
+        if not order:
+            return Response({'detail': 'There is nothing to pay for this reservation.'}, status=400)
         if reservation.status == 'cancelled':
             return Response({'detail': 'This reservation hold has expired. Please book again.'}, status=410)
-        stripe, error = _load_stripe()
-        if error:
-            return error
-
-        payment = _open_deposit_payment(reservation)
         try:
-            # Re-use a still-open session so a double click / page refresh never creates two charges.
-            if payment.external_checkout_session_id:
-                existing = stripe.checkout.Session.retrieve(payment.external_checkout_session_id)
-                if existing.status == 'open':
-                    return Response({'checkout_url': existing.url, 'payment': PaymentSerializer(payment).data})
-
-            metadata = {
-                'reservation_id': str(reservation.id),
-                'reservation_reference': reservation.reference,
-                'payment_id': str(payment.id),
-            }
-            hold_minutes = max(getattr(settings, 'PAYMENT_HOLD_MINUTES', 30), 30)  # Stripe minimum is 30
-            session = stripe.checkout.Session.create(
-                mode='payment',
-                customer_email=reservation.email,
-                line_items=[{
-                    'price_data': {
-                        'currency': payment.currency.lower(),
-                        'unit_amount': int(payment.amount * Decimal('100')),
-                        'product_data': {
-                            'name': f'Khanz reservation deposit - {reservation.reference}',
-                        },
-                    },
-                    'quantity': 1,
-                }],
-                success_url=f'{settings.FRONTEND_URL}/reservation?payment=success&reference={reservation.reference}',
-                cancel_url=f'{settings.FRONTEND_URL}/reservation?payment=cancelled&reference={reservation.reference}',
-                expires_at=int((timezone.now() + timedelta(minutes=hold_minutes)).timestamp()),
-                metadata=metadata,
-                payment_intent_data={'metadata': metadata},
-                idempotency_key=f'{payment.idempotency_key}:checkout:{uuid.uuid4().hex}',
-            )
-        except stripe.error.StripeError as exc:
+            url = checkout_url(order)
+        except CheckoutUnavailable as exc:
+            return Response({'detail': str(exc)}, status=409 if order.payment_status == 'paid' else 503)
+        except Exception as exc:  # Stripe / network errors
             ReservationEvent.objects.create(
-                reservation=reservation, event_type='checkout_failed', actor='stripe',
-                note=getattr(exc, 'user_message', None) or str(exc)[:500],
+                reservation=reservation, event_type='checkout_failed', actor='stripe', note=str(exc)[:500],
             )
-            return Response({'detail': 'We could not open secure checkout. Please try again in a moment.'}, status=502)
-
-        payment.external_checkout_session_id = session.id
-        payment.status = 'requires_payment'
-        payment.save(update_fields=['external_checkout_session_id', 'status', 'updated_at'])
-        return Response({'checkout_url': session.url, 'payment': PaymentSerializer(payment).data})
+            from orders.views import checkout_error_message
+            return Response({'detail': checkout_error_message(exc)}, status=502)
+        return Response({'checkout_url': url})
 
     @action(detail=False, methods=['get'])
     def lookup(self, request):
@@ -346,6 +323,10 @@ class ReservationViewSet(PublicCreateStaffManageMixin, viewsets.ModelViewSet):
         reservation = Reservation.objects.select_related('branch_location').filter(reference=reference).first()
         if not reservation or reservation.email.strip().lower() != email:
             return Response({'detail': 'Reservation not found.'}, status=404)
+        if request.query_params.get('sync') == '1' and hasattr(reservation, 'preorder'):
+            from orders.services import sync_with_stripe
+            sync_with_stripe(reservation.preorder)
+            reservation.refresh_from_db()
         return Response({
             'id': reservation.id,
             'reference': reservation.reference,
@@ -360,6 +341,7 @@ class ReservationViewSet(PublicCreateStaffManageMixin, viewsets.ModelViewSet):
             'child_guests': reservation.child_guests,
             'branch_name': reservation.branch_location.name if reservation.branch_location else reservation.branch,
             'currency': reservation.branch_location.currency if reservation.branch_location else 'NZD',
+            'preorder_total': str(reservation.preorder.total) if hasattr(reservation, 'preorder') else None,
         })
 
     def send_confirmation_email(self, reservation):
@@ -370,10 +352,10 @@ class ReservationViewSet(PublicCreateStaffManageMixin, viewsets.ModelViewSet):
             f'Reference: {reservation.reference}\nBranch: {branch_name}\n'
             f'Date: {reservation.date:%A, %d %B %Y}\nTime: {reservation.time:%I:%M %p}\n'
             f'Guests: {reservation.guests}\nStatus: {reservation.get_status_display()}\n'
-            f'Payment: {reservation.get_payment_method_display()}'
-            + (f' - deposit {reservation.deposit_amount} ({reservation.get_payment_status_display()})'
-               if reservation.deposit_required else '')
-            + '\n\n'
+            + (f'Pre-ordered food: {reservation.preorder.currency} {reservation.preorder.total} by card '
+               f'({reservation.preorder.get_payment_status_display()})\n'
+               if hasattr(reservation, 'preorder') else '')
+            + '\n'
             'We will contact you if anything else is required.\n\nKhanz Restaurant Team'
         )
         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [reservation.email], fail_silently=True)
@@ -397,6 +379,10 @@ class StripeWebhookView(APIView):
             )
         except (ValueError, stripe.error.SignatureVerificationError):
             return Response({'detail': 'Invalid Stripe webhook.'}, status=400)
+
+        from orders.services import handle_stripe_event
+        if handle_stripe_event(event):  # pickup orders and reservation pre-orders
+            return Response({'received': True})
 
         if event['type'] == 'checkout.session.completed':
             session = event['data']['object']

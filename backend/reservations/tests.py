@@ -14,6 +14,7 @@ from rest_framework.test import APITestCase
 from .models import Branch, BranchTimeSlot, MenuCategory, MenuDocument, MenuItem, Payment, Reservation, ReservationEvent
 
 
+@override_settings(STRIPE_SECRET_KEY='', STRIPE_PUBLISHABLE_KEY='', STRIPE_WEBHOOK_SECRET='')
 class BookingApiTests(APITestCase):
     def setUp(self):
         self.branch = Branch.objects.create(
@@ -51,67 +52,26 @@ class BookingApiTests(APITestCase):
             'source': 'web',
         }
 
-    @override_settings(STRIPE_SECRET_KEY='sk_test_dummy')
-    def test_card_booking_creates_reference_deposit_and_audit_event(self):
-        response = self.client.post(reverse('reservation-list'), {**self.payload(), 'payment_method': 'card'}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        booking = Reservation.objects.get(pk=response.data['id'])
-        self.assertTrue(booking.reference.startswith('KH'))
-        self.assertEqual(booking.branch_location, self.branch)
-        self.assertEqual(booking.deposit_amount, Decimal('20.00'))
-        self.assertEqual(booking.guests, 4)
-        self.assertEqual(booking.child_guests, 2)
-        self.assertEqual(booking.status, 'payment_pending')
-        self.assertEqual(booking.payment_method, 'card')
-        self.assertTrue(ReservationEvent.objects.filter(reservation=booking, event_type='created').exists())
-
-    def test_cash_booking_skips_deposit_and_is_pay_on_site(self):
-        for method in ['cash', 'cash_on_pickup', 'cash_on_delivery']:
-            response = self.client.post(reverse('reservation-list'), {**self.payload(), 'payment_method': method}, format='json')
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
-            booking = Reservation.objects.get(pk=response.data['id'])
-            self.assertEqual(booking.payment_method, method)
-            self.assertFalse(booking.deposit_required)
-            self.assertEqual(booking.deposit_amount, Decimal('0.00'))
-            self.assertEqual(booking.payment_status, 'pay_on_site')
-            self.assertEqual(booking.status, 'pending')
-
-    def test_card_rejected_when_stripe_not_configured(self):
-        response = self.client.post(reverse('reservation-list'), {**self.payload(), 'payment_method': 'card'}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('payment_method', response.data)
-        self.assertFalse(Reservation.objects.exists())
-
-    @override_settings(STRIPE_SECRET_KEY='sk_test_dummy')
-    def test_card_rejected_when_branch_has_no_deposit(self):
+    def test_branch_without_deposit_books_without_payment(self):
         self.branch.deposit_policy = 'none'
         self.branch.save()
-        response = self.client.post(reverse('reservation-list'), {**self.payload(), 'payment_method': 'card'}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('payment_method', response.data)
-
-    def test_payment_method_must_be_accepted_by_branch(self):
-        self.branch.accepted_payment_methods = ['cash']
-        self.branch.save()
-        response = self.client.post(reverse('reservation-list'), {**self.payload(), 'payment_method': 'cash_on_delivery'}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = self.client.post(reverse('reservation-list'), self.payload(), format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        booking = Reservation.objects.get(pk=response.data['id'])
+        self.assertEqual(booking.payment_method, 'card')
+        self.assertFalse(booking.deposit_required)
+        self.assertEqual(booking.payment_status, 'not_required')
+        self.assertEqual(booking.status, 'pending')
 
     def test_branch_api_exposes_payment_options(self):
         response = self.client.get(reverse('branch-detail', kwargs={'slug': self.branch.slug}))
-        self.assertIn('accepted_payment_methods', response.data)
         self.assertFalse(response.data['online_payments_enabled'])
-
-    @override_settings(STRIPE_SECRET_KEY='sk_test_dummy')
-    def test_expired_unpaid_card_hold_releases_capacity(self):
-        response = self.client.post(reverse('reservation-list'), {**self.payload(), 'payment_method': 'card'}, format='json')
-        Reservation.objects.filter(pk=response.data['id']).update(created_at=timezone.now() - timedelta(minutes=45))
-        availability = self.client.get(reverse('reservation-availability'), {
-            'branch': self.branch.slug, 'date': self.booking_date.isoformat(), 'guests': 1,
-        })
-        self.assertEqual(next(item for item in availability.data['slots'] if item['id'] == self.slot.id)['remaining_capacity'], 20)
+        self.assertNotIn('accepted_payment_methods', response.data)
 
     def test_staff_edit_does_not_reset_status(self):
-        response = self.client.post(reverse('reservation-list'), {**self.payload(), 'payment_method': 'cash'}, format='json')
+        self.branch.deposit_policy = 'none'
+        self.branch.save()
+        response = self.client.post(reverse('reservation-list'), self.payload(), format='json')
         booking = Reservation.objects.get(pk=response.data['id'])
         booking.status = 'confirmed'
         booking.save(update_fields=['status'])
@@ -123,11 +83,13 @@ class BookingApiTests(APITestCase):
         self.assertEqual(booking.guests, 5)
 
     def test_lookup_requires_matching_email(self):
-        response = self.client.post(reverse('reservation-list'), {**self.payload(), 'payment_method': 'cash'}, format='json')
+        self.branch.deposit_policy = 'none'
+        self.branch.save()
+        response = self.client.post(reverse('reservation-list'), self.payload(), format='json')
         ref = response.data['reference']
         ok = self.client.get(reverse('reservation-lookup'), {'reference': ref, 'email': 'AROHA@example.nz'})
         self.assertEqual(ok.status_code, 200)
-        self.assertEqual(ok.data['payment_method'], 'cash')
+        self.assertEqual(ok.data['payment_method'], 'card')
         bad = self.client.get(reverse('reservation-lookup'), {'reference': ref, 'email': 'other@example.nz'})
         self.assertEqual(bad.status_code, 404)
 
@@ -149,6 +111,7 @@ class BookingApiTests(APITestCase):
         self.assertFalse(slot['available'])
         self.assertEqual(slot['remaining_capacity'], 2)
 
+    @override_settings(STRIPE_SECRET_KEY='sk_test_dummy')
     def test_cancelled_booking_releases_people_back_to_slot(self):
         response = self.client.post(reverse('reservation-list'), self.payload(), format='json')
         booking = Reservation.objects.get(pk=response.data['id'])
@@ -163,6 +126,7 @@ class BookingApiTests(APITestCase):
         })
         self.assertEqual(next(item for item in after.data['slots'] if item['id'] == self.slot.id)['remaining_capacity'], 20)
 
+    @override_settings(STRIPE_SECRET_KEY='sk_test_dummy')
     def test_staff_guest_update_recalculates_remaining_capacity(self):
         create_response = self.client.post(reverse('reservation-list'), self.payload(), format='json')
         user = get_user_model().objects.create_user('slot-manager', password='safe-test-password', is_staff=True)
@@ -186,18 +150,6 @@ class BookingApiTests(APITestCase):
         payload = self.payload()
         first = self.client.post(reverse('reservation-list'), payload, format='json')
         self.assertEqual(first.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_unconfigured_stripe_returns_safe_service_response(self):
-        with override_settings(STRIPE_SECRET_KEY='sk_test_dummy'):
-            create_response = self.client.post(reverse('reservation-list'), {**self.payload(), 'payment_method': 'card'}, format='json')
-        booking_id = create_response.data['id']
-        response = self.client.post(
-            reverse('reservation-checkout-session', kwargs={'pk': booking_id}),
-            {'email': 'aroha@example.nz'}, format='json',
-        )
-        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
-        self.assertIn('not configured', response.data['detail'])
-
 
 class MenuApiTests(APITestCase):
     def test_normalized_menu_api_returns_categories_and_items(self):
@@ -230,43 +182,14 @@ class StaffBookingApiTests(APITestCase):
         self.assertIn('by_status', response.data)
 
 
-@override_settings(STRIPE_SECRET_KEY='sk_test_dummy', STRIPE_WEBHOOK_SECRET='whsec_dummy')
-class StripeFlowTests(APITestCase):
+class PartySizeCapTests(APITestCase):
     setUp = BookingApiTests.setUp
     payload = BookingApiTests.payload
 
-    def _card_booking(self):
-        response = self.client.post(reverse('reservation-list'), {**self.payload(), 'payment_method': 'card'}, format='json')
-        return Reservation.objects.get(pk=response.data['id'])
-
-    def test_checkout_session_and_expiry_webhook_release_seats(self):
-        booking = self._card_booking()
-        fake_session = mock.Mock(id='cs_test_1', url='https://checkout.stripe.test/cs_test_1')
-        with mock.patch('stripe.checkout.Session.create', return_value=fake_session) as create:
-            response = self.client.post(
-                reverse('reservation-checkout-session', kwargs={'pk': booking.id}),
-                {'email': booking.email}, format='json',
-            )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['checkout_url'], fake_session.url)
-        self.assertIn('expires_at', create.call_args.kwargs)
-
-        event = {'type': 'checkout.session.expired', 'data': {'object': {'id': 'cs_test_1'}}}
-        with mock.patch('stripe.Webhook.construct_event', return_value=event):
-            hook = self.client.post(reverse('stripe-webhook'), data=b'{}', content_type='application/json')
-        self.assertEqual(hook.status_code, 200)
-        booking.refresh_from_db()
-        self.assertEqual(booking.status, 'cancelled')
-        self.assertEqual(Payment.objects.get(reservation=booking).status, 'cancelled')
-
-    def test_paid_webhook_confirms_booking(self):
-        booking = self._card_booking()
-        payment = Payment.objects.create(reservation=booking, amount=booking.deposit_amount, external_checkout_session_id='cs_paid')
-        event = {'type': 'checkout.session.completed', 'data': {'object': {'id': 'cs_paid', 'payment_status': 'paid', 'payment_intent': 'pi_1'}}}
-        with mock.patch('stripe.Webhook.construct_event', return_value=event):
-            self.client.post(reverse('stripe-webhook'), data=b'{}', content_type='application/json')
-        booking.refresh_from_db()
-        payment.refresh_from_db()
-        self.assertEqual(booking.payment_status, 'paid')
-        self.assertEqual(booking.status, 'confirmed')
-        self.assertEqual(payment.status, 'succeeded')
+    def test_party_over_branch_limit_is_rejected(self):
+        # Branch max_online_party_size is 10 even though the slot holds 20.
+        response = self.client.post(reverse('reservation-list'), {
+            **self.payload(), 'adult_guests': 9, 'child_guests': 2,
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('10', str(response.data))

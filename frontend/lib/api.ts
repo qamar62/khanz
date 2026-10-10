@@ -18,7 +18,7 @@ interface Paginated<T> {
 }
 
 // Reservation Types
-export type PaymentMethod = 'card' | 'cash' | 'cash_on_pickup' | 'cash_on_delivery';
+export type PaymentMethod = 'card';
 
 export interface ReservationData {
   name: string;
@@ -35,6 +35,7 @@ export interface ReservationData {
   branch?: string;
   branch_slug?: string;
   payment_method?: PaymentMethod;
+  preorder_items?: OrderLineInput[];
   source?: 'web' | 'mobile' | 'admin' | 'phone' | 'walk_in' | 'partner';
 }
 
@@ -46,11 +47,111 @@ export interface Reservation extends ReservationData {
   deposit_required: boolean;
   deposit_amount: string;
   payment_method: PaymentMethod;
+  preorder?: ReservationPreorder | null;
   branch_details?: Branch;
   google_calendar_event_id?: string;
   is_upcoming: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface OrderLineInput {
+  menu_item_id: number;
+  quantity: number;
+  option_ids?: number[];
+  notes?: string;
+}
+
+export interface Promotion {
+  id: number;
+  title: string;
+  description: string;
+  badge: string;
+  image_url: string | null;
+  discount_type: 'percent' | 'fixed' | 'none';
+  discount_value: string;
+  min_subtotal: string;
+  applies_to: 'all' | 'pickup' | 'preorder';
+  starts_at: string;
+  ends_at: string;
+  cta_label: string;
+  cta_url: string;
+}
+
+export interface ReservationPreorder {
+  reference: string;
+  currency: string;
+  subtotal: string;
+  promotion_title?: string;
+  discount?: string;
+  card_fee_percent: string;
+  card_fee: string;
+  total: string;
+  payment_status: string;
+}
+
+export interface QuoteLine {
+  menu_item_id: number;
+  code: string;
+  name: string;
+  options: { id: number; name: string; price: string }[];
+  notes: string;
+  unit_price: string;
+  quantity: number;
+  line_total: string;
+}
+
+export interface Quote {
+  currency: string;
+  lines: QuoteLine[];
+  subtotal: string;
+  promotion: { id: number; title: string; badge: string } | null;
+  promotion_title: string;
+  discount: string;
+  card_fee_percent: string;
+  card_fee: string;
+  total: string;
+}
+
+export interface PickupTimes {
+  asap: { available: boolean; ready_at: string | null; minutes: number };
+  days: { date: string; label: string; times: string[] }[];
+  timezone: string;
+}
+
+export interface Customer {
+  email: string;
+  name: string;
+  phone: string;
+}
+
+export interface Order {
+  reference: string;
+  kind: 'pickup' | 'preorder';
+  status: 'awaiting_payment' | 'confirmed' | 'preparing' | 'ready' | 'collected' | 'cancelled';
+  payment_status: 'unpaid' | 'paid' | 'failed' | 'cancelled' | 'refunded';
+  name: string;
+  email: string;
+  phone: string;
+  is_guest?: boolean;
+  branch_name: string;
+  branch_slug: string;
+  branch_address: string;
+  branch_phone: string;
+  reservation_reference: string | null;
+  pickup_asap: boolean;
+  pickup_at: string | null;
+  notes: string;
+  currency: string;
+  subtotal: string;
+  promotion_title: string;
+  discount: string;
+  card_fee_percent: string;
+  card_fee: string;
+  total: string;
+  items: { id: number; name: string; code: string; options: { id: number; name: string; price: string }[]; notes: string; unit_price: string; quantity: number; line_total: string }[];
+  created_at: string;
+  paid_at: string | null;
 }
 
 // Contact Message Types
@@ -113,8 +214,10 @@ export interface Branch {
   online_capacity: number;
   deposit_policy: 'none' | 'fixed' | 'per_guest';
   deposit_amount: string;
-  accepted_payment_methods?: PaymentMethod[];
   online_payments_enabled?: boolean;
+  pickup_enabled?: boolean;
+  pickup_prep_minutes?: number;
+  card_fee_percent?: string;
   sort_order: number;
 }
 
@@ -162,6 +265,7 @@ export interface MenuCategory {
   slug: string;
   description: string;
   display_order: number;
+  suggest_at_checkout?: boolean;
   items: MenuItem[];
 }
 
@@ -192,12 +296,13 @@ async function apiFetch<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   try {
+    const { headers, ...rest } = options;
     const response = await fetch(`${API_URL}${endpoint}`, {
+      ...rest,
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...headers,
       },
-      ...options,
     });
 
     if (!response.ok) {
@@ -249,8 +354,8 @@ export const reservationAPI = {
     });
   },
 
-  lookup: async (reference: string, email: string): Promise<ApiResponse<ReservationLookup>> => {
-    const params = new URLSearchParams({ reference, email });
+  lookup: async (reference: string, email: string, sync = false): Promise<ApiResponse<ReservationLookup>> => {
+    const params = new URLSearchParams({ reference, email, ...(sync ? { sync: '1' } : {}) });
     return apiFetch<ReservationLookup>(`/reservations/lookup/?${params}`);
   },
 
@@ -418,6 +523,47 @@ export const menuAPI = {
     const suffix = branch ? `?branch=${encodeURIComponent(branch)}` : '';
     return apiFetch<MenuCategory[]>(`/menus/${suffix}`);
   },
+};
+
+const customerHeaders = (token?: string | null): HeadersInit => (token ? { Authorization: `Customer ${token}` } : {});
+type OrderAuth = { token?: string | null; email?: string | null; orderToken?: string | null; sync?: boolean };
+const orderHeaders = (opts: OrderAuth): HeadersInit =>
+  opts.token ? customerHeaders(opts.token) : opts.orderToken ? { Authorization: `Order ${opts.orderToken}` } : {};
+
+export const customerAuthAPI = {
+  requestCode: (email: string) =>
+    apiFetch<{ sent: boolean; expires_in_minutes: number; debug_code?: string }>('/auth/otp/request/', {
+      method: 'POST', body: JSON.stringify({ email }),
+    }),
+  verifyCode: (email: string, code: string) =>
+    apiFetch<{ token: string; customer: Customer }>('/auth/otp/verify/', {
+      method: 'POST', body: JSON.stringify({ email, code }),
+    }),
+  me: (token: string) =>
+    apiFetch<{ customer: Customer; recent_orders: Order[] }>('/auth/me/', { headers: customerHeaders(token) }),
+};
+
+export const orderAPI = {
+  quote: (branch: string, items: OrderLineInput[], kind: 'pickup' | 'preorder' = 'pickup') =>
+    apiFetch<Quote>('/orders/quote/', { method: 'POST', body: JSON.stringify({ branch, items, kind }) }),
+  pickupTimes: (branch: string) =>
+    apiFetch<PickupTimes>(`/orders/pickup-times/?${new URLSearchParams({ branch })}`),
+  /** Pass a customer token, or null with `guest: true` for a name + phone guest order. */
+  create: (token: string | null, data: { branch: string; items: OrderLineInput[]; name: string; phone: string; pickup: string; notes?: string; guest?: boolean; email?: string }) =>
+    apiFetch<Order & { access_token: string }>('/orders/', { method: 'POST', body: JSON.stringify(data), headers: customerHeaders(token) }),
+  get: (reference: string, opts: OrderAuth) =>
+    apiFetch<Order>(`/orders/${encodeURIComponent(reference)}/?${new URLSearchParams({ ...(opts.email ? { email: opts.email } : {}), ...(opts.sync ? { sync: '1' } : {}) })}`, {
+      headers: orderHeaders(opts),
+    }),
+  checkout: (reference: string, opts: OrderAuth) =>
+    apiFetch<{ checkout_url: string }>(`/orders/${encodeURIComponent(reference)}/checkout/`, {
+      method: 'POST', body: JSON.stringify({ email: opts.email ?? '' }), headers: orderHeaders(opts),
+    }),
+};
+
+export const promotionAPI = {
+  live: (placement?: 'home' | 'checkout') =>
+    apiFetch<Promotion[]>(`/promotions/live/${placement ? `?placement=${placement}` : ''}`),
 };
 
 export default {

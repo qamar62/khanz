@@ -29,14 +29,6 @@ def online_payments_enabled():
     return bool(settings.STRIPE_SECRET_KEY)
 
 
-def deposit_for(branch, guests):
-    if branch.deposit_policy == 'fixed':
-        return branch.deposit_amount
-    if branch.deposit_policy == 'per_guest':
-        return branch.deposit_amount * guests
-    return Decimal('0.00')
-
-
 class MenuDocumentSerializer(serializers.ModelSerializer):
     branch_slug = serializers.CharField(source='branch.slug', read_only=True, allow_null=True)
     file_url = serializers.SerializerMethodField()
@@ -85,7 +77,7 @@ class MenuCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MenuCategory
-        fields = ['id', 'name', 'slug', 'description', 'display_order', 'items']
+        fields = ['id', 'name', 'slug', 'description', 'display_order', 'suggest_at_checkout', 'items']
         read_only_fields = fields
 
     def get_items(self, obj):
@@ -99,6 +91,7 @@ class MenuCategorySerializer(serializers.ModelSerializer):
 
 class BranchSerializer(serializers.ModelSerializer):
     online_payments_enabled = serializers.SerializerMethodField()
+    card_fee_percent = serializers.SerializerMethodField()
 
     class Meta:
         model = Branch
@@ -108,13 +101,16 @@ class BranchSerializer(serializers.ModelSerializer):
             'description', 'timezone', 'currency', 'booking_interval_minutes',
             'default_booking_duration_minutes', 'min_advance_minutes',
             'max_advance_days', 'max_online_party_size', 'deposit_policy',
-            'online_capacity', 'deposit_amount', 'accepted_payment_methods',
-            'online_payments_enabled', 'sort_order', 'created_at', 'updated_at',
+            'online_capacity', 'deposit_amount', 'online_payments_enabled',
+            'pickup_enabled', 'pickup_prep_minutes', 'card_fee_percent', 'sort_order', 'created_at', 'updated_at',
         ]
         read_only_fields = fields
 
     def get_online_payments_enabled(self, obj):
         return online_payments_enabled()
+
+    def get_card_fee_percent(self, obj):
+        return str(getattr(settings, 'CARD_FEE_PERCENT', '2.5'))
 
 
 
@@ -170,6 +166,11 @@ class ReservationSerializer(serializers.ModelSerializer):
     time_slot_details = BranchTimeSlotSerializer(source='time_slot', read_only=True)
     table_details = RestaurantTableSerializer(source='tables', many=True, read_only=True)
     payments = PaymentSerializer(many=True, read_only=True)
+    preorder_items = serializers.ListField(
+        child=serializers.DictField(), write_only=True, required=False, allow_empty=True,
+        help_text='Optional dishes to pre-order: [{menu_item_id, quantity, option_ids, notes}]',
+    )
+    preorder = serializers.SerializerMethodField()
 
     class Meta:
         model = Reservation
@@ -179,7 +180,8 @@ class ReservationSerializer(serializers.ModelSerializer):
             'duration_minutes', 'ends_at', 'adult_guests', 'child_guests',
             'guests', 'occasion', 'special_requests', 'source', 'status',
             'payment_status', 'payment_method', 'deposit_required', 'deposit_amount',
-            'table_details', 'payments', 'is_upcoming', 'created_at', 'updated_at',
+            'table_details', 'payments', 'preorder_items', 'preorder', 'is_upcoming',
+            'created_at', 'updated_at',
         ]
         read_only_fields = [
             'id', 'reference', 'branch', 'branch_details', 'time', 'time_slot_details',
@@ -218,22 +220,15 @@ class ReservationSerializer(serializers.ModelSerializer):
         if booking_date and booking_date < timezone.localdate():
             raise serializers.ValidationError({'date': 'Reservation date cannot be in the past.'})
 
-        payment_method = attrs.get('payment_method')
-        if branch and payment_method:
-            accepted = branch.accepted_payment_methods or []
-            if payment_method not in accepted:
+        raw_preorder = attrs.get('preorder_items') or []
+        self._preorder = None
+        if raw_preorder and branch and not self.instance:
+            if not online_payments_enabled():
                 raise serializers.ValidationError({
-                    'payment_method': 'This payment option is not offered at this restaurant.'
+                    'preorder_items': 'Online payment for pre-orders is unavailable right now. Book without dishes or call us.'
                 })
-            if payment_method == 'card' and not self.instance:
-                if not online_payments_enabled():
-                    raise serializers.ValidationError({
-                        'payment_method': 'Card payments are not available yet. Please choose a cash option.'
-                    })
-                if deposit_for(branch, guests) <= 0:
-                    raise serializers.ValidationError({
-                        'payment_method': 'This restaurant does not take card deposits online. Please choose a cash option.'
-                    })
+            from orders.pricing import build_lines
+            self._preorder = build_lines(raw_preorder, branch)
 
         if branch and guests and guests > branch.max_online_party_size:
             raise serializers.ValidationError({
@@ -255,7 +250,21 @@ class ReservationSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def get_preorder(self, obj):
+        order = getattr(obj, 'preorder', None) if obj.pk else None
+        if not order:
+            return None
+        return {
+            'reference': order.reference, 'currency': order.currency, 'subtotal': str(order.subtotal),
+            'promotion_title': order.promotion_title, 'discount': str(order.discount),
+            'card_fee_percent': str(order.card_fee_percent), 'card_fee': str(order.card_fee),
+            'total': str(order.total), 'payment_status': order.payment_status,
+            'items': [{'name': i.name, 'quantity': i.quantity, 'options': i.options, 'line_total': str(i.line_total)}
+                      for i in order.items.all()],
+        }
+
     def _capacity_checked_save(self, validated_data, instance=None):
+        validated_data.pop('preorder_items', None)
         branch = validated_data['branch_location']
         slot = validated_data.get('time_slot') or (instance.time_slot if instance else None)
         booking_date = validated_data.get('date') or (instance.date if instance else None)
@@ -284,18 +293,27 @@ class ReservationSerializer(serializers.ModelSerializer):
             # Staff edits (guests, time, notes...) must not reset status or payment state.
             return super().update(instance, validated_data)
 
-        # Card = pay the branch deposit online now. Cash options = nothing charged online.
-        payment_method = validated_data.get('payment_method') or 'cash'
-        deposit = deposit_for(branch, guests) if payment_method == 'card' else Decimal('0.00')
+        # No deposits. Pre-ordered food (optional) is paid by card on Stripe: food + card fee.
+        preorder = getattr(self, '_preorder', None)
         validated_data.update({
-            'payment_method': payment_method,
+            'payment_method': 'card',
             'duration_minutes': branch.default_booking_duration_minutes,
-            'deposit_required': deposit > 0,
-            'deposit_amount': deposit,
-            'payment_status': 'unpaid' if deposit > 0 else 'pay_on_site',
-            'status': 'payment_pending' if deposit > 0 else 'pending',
+            'deposit_required': False,
+            'deposit_amount': Decimal('0.00'),
+            'payment_status': 'unpaid' if preorder else 'not_required',
+            'status': 'payment_pending' if preorder else 'pending',
         })
         reservation = super().create(validated_data)
+        if preorder:
+            from orders.services import create_order
+            lines, subtotal = preorder
+            local_tz = pytz.timezone(branch.timezone)
+            create_order(
+                kind='preorder', branch=branch, lines=lines, subtotal=subtotal, reservation=reservation,
+                name=reservation.name, email=reservation.email, phone=reservation.phone,
+                pickup_at=local_tz.localize(datetime.combine(reservation.date, reservation.time)),
+                notes=reservation.special_requests,
+            )
         ReservationEvent.objects.create(
             reservation=reservation,
             event_type='created',

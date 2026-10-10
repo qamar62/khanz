@@ -118,7 +118,11 @@ class Command(BaseCommand):
         for order, (slug, name, description) in enumerate(CATEGORIES):
             category, _ = MenuCategory.objects.update_or_create(
                 slug=slug,
-                defaults={'name': name, 'description': description, 'display_order': order, 'is_active': True},
+                defaults={
+                    'name': name, 'description': description, 'display_order': order, 'is_active': True,
+                    # Breads, sides and drinks are suggested as add-ons in the cart.
+                    'suggest_at_checkout': any(word in slug for word in ('side', 'drink', 'beverage', 'bread', 'dessert')),
+                },
             )
             categories[slug] = category
 
